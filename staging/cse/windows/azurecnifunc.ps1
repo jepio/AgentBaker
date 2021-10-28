@@ -1,5 +1,4 @@
-function
-Install-VnetPlugins
+function Install-VnetPlugins
 {
     Param(
         [Parameter(Mandatory=$true)][string]
@@ -26,8 +25,7 @@ Install-VnetPlugins
     move $AzureCNIBinDir/*.conflist $AzureCNIConfDir
 }
 
-function
-Set-AzureCNIConfig
+function Set-AzureCNIConfig
 {
     Param(
         [Parameter(Mandatory=$true)][string]
@@ -334,4 +332,15 @@ function New-ExternalHnsNetwork
         Set-ExitCode -ExitCode $global:WINDOWS_CSE_ERROR_MANAGEMENT_IP_NOT_EXIST -ErrorMessage "Failed to find $managementIP after creating $externalNetwork network"
     }
     Write-Log "It took $($StopWatch.Elapsed.Seconds) seconds to create the $externalNetwork network."
+}
+
+function Get-HnsPsm1
+{
+    Param(
+        [string]
+        $HnsUrl = "https://github.com/Microsoft/SDN/raw/master/Kubernetes/windows/hns.psm1",
+        [Parameter(Mandatory=$true)][string]
+        $HNSModule
+    )
+    DownloadFileOverHttp -Url $HnsUrl -DestinationPath "$HNSModule"
 }
