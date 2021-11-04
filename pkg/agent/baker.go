@@ -7,6 +7,7 @@ import (
 	"archive/zip"
 	"bytes"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"reflect"
 	"strings"
@@ -15,6 +16,8 @@ import (
 	"github.com/Azure/agentbaker/pkg/agent/datamodel"
 	"github.com/Azure/agentbaker/pkg/templates"
 	"github.com/Azure/go-autorest/autorest/to"
+
+	clct "github.com/kinvolk/container-linux-config-transpiler/config"
 )
 
 // TemplateGenerator represents the object that performs the template generation.
@@ -64,7 +67,7 @@ func (t *TemplateGenerator) getLinuxNodeCustomDataJSONObject(config *datamodel.N
 // TODO(ace): token: "{{GetTLSBootstrapTokenForKubeConfig}}"
 // as used in bootstrap kubeconfig in nodecustomdata.yml
 //
-// probably don't need a totally separate func, but you get the idea for a poc. 
+// probably don't need a totally separate func, but you get the idea for a poc.
 
 // GetFlatcarLinuxNodeCustomDataJSONObject returns Linux customData JSON object in the form
 // { "customData": "<customData string>" }
@@ -75,16 +78,28 @@ func (t *TemplateGenerator) getFlatcarLinuxNodeCustomDataJSONObject(config *data
 	parameters := getParameters(config, "baker", "1.0")
 	//get variable cloudInit
 	variables := getCustomDataVariables(config)
-	str, e := t.getSingleLineForTemplate(kubernetesFlatcarCustomData, 
+	str, e := t.getSingleLine(kubernetesFlatcarCustomData,
 		config.AgentPoolProfile, t.getBakerFuncMap(config, parameters, variables))
-
-	fmt.Println(str)
 
 	if e != nil {
 		panic(e)
 	}
 
-	return fmt.Sprintf("{\"customData\": \"%s\"}", str)
+	clc, ast, reports := clct.Parse([]byte(str))
+	if (len(reports.Entries) > 0) || reports.IsFatal() {
+		panic(fmt.Errorf("error parsing Container Linux Config: %v", reports.String()))
+	}
+	ign, report := clct.Convert(clc, "", ast)
+	if (len(report.Entries) > 0) || report.IsFatal() {
+		panic(fmt.Errorf("error converting to Ignition: %v", report.String()))
+	}
+	ignjson, e := json.Marshal(&ign)
+	if e != nil {
+		panic(e)
+	}
+	ignstr := escapeSingleLine(string(ignjson))
+
+	return fmt.Sprintf("{\"customData\": \"%s\"}", ignstr)
 }
 
 // GetWindowsNodeCustomDataJSONObject returns Windows customData JSON object in the form
@@ -123,7 +138,6 @@ func (t *TemplateGenerator) GetNodeBootstrappingCmd(config *datamodel.NodeBootst
 	}
 	return t.getLinuxNodeCSECommand(config)
 }
-
 
 // TODO(ace): does flatcar even need CSE? i'm skeptical.
 // getFlatcarLinuxNodeCSECommand returns Linux node custom script extension execution command

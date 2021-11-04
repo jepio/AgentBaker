@@ -1,8 +1,1 @@
-{
-    "TODO": "POPULATE_ME",
-    "HELPFUL_DATA": {
-        "server": "https://foobarbaz.hcp.southcentralus.azmk8s.io:443",
-        "token": "07401b.f395accd246ae52d"
-    },
-    "I_KNOW_THIS_ISNT_REAL_IGNITION": true
-}
+{"ignition":{"config":{},"security":{"tls":{}},"timeouts":{},"version":"2.3.0"},"networkd":{},"passwd":{},"storage":{"files":[{"filesystem":"root","path":"/etc/hostname","contents":{"source":"data:,%7B%0A%20%20%20%20%22TODO%22%3A%20%22POPULATE_ME%22%2C%0A%20%20%20%20%22HELPFUL_DATA%22%3A%20%7B%0A%20%20%20%20%20%20%20%20%22server%22%3A%20%22https%3A%2F%2Ffoobarbaz.hcp.southcentralus.azmk8s.io%3A443%22%2C%0A%20%20%20%20%20%20%20%20%22token%22%3A%20%2207401b.f395accd246ae52d%22%0A%20%20%20%20%7D%2C%0A%20%20%20%20%22I_KNOW_THIS_ISNT_REAL_IGNITION%22%3A%20true%0A%7D%0A","verification":{}},"mode":420}]},"systemd":{}}

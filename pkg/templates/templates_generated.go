@@ -57,7 +57,7 @@
 // linux/cloud-init/artifacts/sysctl-d-60-CIS.conf
 // linux/cloud-init/artifacts/ubuntu/cse_helpers_ubuntu.sh
 // linux/cloud-init/artifacts/ubuntu/cse_install_ubuntu.sh
-// linux/cloud-init/config.ign
+// linux/cloud-init/config.ign.yml
 // linux/cloud-init/nodecustomdata.yml
 // windows/containerdtemplate.toml
 // windows/csecmd.ps1
@@ -4246,26 +4246,34 @@ func linuxCloudInitArtifactsUbuntuCse_install_ubuntuSh() (*asset, error) {
 	return a, nil
 }
 
-var _linuxCloudInitConfigIgn = []byte(`{
-    "TODO": "POPULATE_ME",
-    "HELPFUL_DATA": {
-        "server": "https://{{GetKubernetesEndpoint}}:443",
-        "token": "{{GetTLSBootstrapTokenForKubeConfig}}"
-    },
-    "I_KNOW_THIS_ISNT_REAL_IGNITION": true
-}`)
+var _linuxCloudInitConfigIgnYml = []byte(`storage:
+  files:
+  - path: /etc/hostname
+    filesystem: "root"
+    mode: 0644
+    contents:
+      inline: |
+        {
+            "TODO": "POPULATE_ME",
+            "HELPFUL_DATA": {
+                "server": "https://{{GetKubernetesEndpoint}}:443",
+                "token": "{{GetTLSBootstrapTokenForKubeConfig}}"
+            },
+            "I_KNOW_THIS_ISNT_REAL_IGNITION": true
+        }
+`)
 
-func linuxCloudInitConfigIgnBytes() ([]byte, error) {
-	return _linuxCloudInitConfigIgn, nil
+func linuxCloudInitConfigIgnYmlBytes() ([]byte, error) {
+	return _linuxCloudInitConfigIgnYml, nil
 }
 
-func linuxCloudInitConfigIgn() (*asset, error) {
-	bytes, err := linuxCloudInitConfigIgnBytes()
+func linuxCloudInitConfigIgnYml() (*asset, error) {
+	bytes, err := linuxCloudInitConfigIgnYmlBytes()
 	if err != nil {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "linux/cloud-init/config.ign", size: 0, mode: os.FileMode(0), modTime: time.Unix(0, 0)}
+	info := bindataFileInfo{name: "linux/cloud-init/config.ign.yml", size: 0, mode: os.FileMode(0), modTime: time.Unix(0, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -8046,7 +8054,7 @@ var _bindata = map[string]func() (*asset, error){
 	"linux/cloud-init/artifacts/sysctl-d-60-CIS.conf":                      linuxCloudInitArtifactsSysctlD60CisConf,
 	"linux/cloud-init/artifacts/ubuntu/cse_helpers_ubuntu.sh":              linuxCloudInitArtifactsUbuntuCse_helpers_ubuntuSh,
 	"linux/cloud-init/artifacts/ubuntu/cse_install_ubuntu.sh":              linuxCloudInitArtifactsUbuntuCse_install_ubuntuSh,
-	"linux/cloud-init/config.ign":                                          linuxCloudInitConfigIgn,
+	"linux/cloud-init/config.ign.yml":                                      linuxCloudInitConfigIgnYml,
 	"linux/cloud-init/nodecustomdata.yml":                                  linuxCloudInitNodecustomdataYml,
 	"windows/containerdtemplate.toml":                                      windowsContainerdtemplateToml,
 	"windows/csecmd.ps1":                                                   windowsCsecmdPs1,
@@ -8171,7 +8179,7 @@ var _bintree = &bintree{nil, map[string]*bintree{
 					"cse_install_ubuntu.sh": &bintree{linuxCloudInitArtifactsUbuntuCse_install_ubuntuSh, map[string]*bintree{}},
 				}},
 			}},
-			"config.ign":         &bintree{linuxCloudInitConfigIgn, map[string]*bintree{}},
+			"config.ign.yml":     &bintree{linuxCloudInitConfigIgnYml, map[string]*bintree{}},
 			"nodecustomdata.yml": &bintree{linuxCloudInitNodecustomdataYml, map[string]*bintree{}},
 		}},
 	}},
