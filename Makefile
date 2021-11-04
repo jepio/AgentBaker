@@ -169,7 +169,7 @@ ensure-generated:
 
 .PHONY: test-e2e
 test-e2e:
-	@test/e2e.sh
+	@e2e/e2e.sh
 
 HAS_GIT := $(shell $(CHECK) git)
 
