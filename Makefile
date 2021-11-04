@@ -106,7 +106,7 @@ vendor: tidy
 	$(GO) mod vendor
 
 build-binary: generate
-	go build $(GOFLAGS) -v -ldflags "$(LDFLAGS)" -o $(BINARY_DEST_DIR)/baker .
+	go build $(GOFLAGS) -v -ldflags "$(LDFLAGS)" -o $(BINARY_DEST_DIR)/baker cmd/main.go
 
 # usage: make clean build-cross dist VERSION=v0.4.0
 .PHONY: build-cross
