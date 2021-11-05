@@ -17,7 +17,7 @@ import (
 	"github.com/Azure/agentbaker/pkg/templates"
 	"github.com/Azure/go-autorest/autorest/to"
 
-	clct "github.com/kinvolk/container-linux-config-transpiler/config"
+	clct "github.com/flatcar-linux/container-linux-config-transpiler/config"
 )
 
 // TemplateGenerator represents the object that performs the template generation.
