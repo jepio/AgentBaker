@@ -4255,7 +4255,772 @@ var _linuxCloudInitConfigIgnYml = []byte(`storage:
         compression: gzip
       inline: !!binary |
         {{GetVariableProperty "cloudInitData" "provisionSource"}}
-`)
+
+  - path: {{GetCSEHelpersScriptDistroFilepath}}
+    mode: 0744
+    contents:
+      remote:
+        compression: gzip
+      inline: !!binary |
+        {{GetVariableProperty "cloudInitData" "provisionSourceFlatcar"}}
+
+  - path: /opt/azure/containers/provision_start.sh
+    mode: 0744
+    contents:
+      remote:
+        compression: gzip
+      inline: !!binary |
+        {{GetVariableProperty "cloudInitData" "provisionStartScript"}}
+
+  - path: /opt/azure/containers/provision.sh
+    mode: 0744
+    contents:
+      remote:
+        compression: gzip
+      inline: !!binary |
+        {{GetVariableProperty "cloudInitData" "provisionScript"}}
+
+  - path: {{GetCSEInstallScriptDistroFilepath}}
+    mode: 0744
+    contents:
+      remote:
+        compression: gzip
+      inline: !!binary |
+        {{GetVariableProperty "cloudInitData" "provisionInstallsFlatcar"}}
+
+  - path: {{GetCSEConfigScriptFilepath}}
+    mode: 0744
+    contents:
+      remote:
+        compression: gzip
+      inline: !!binary |
+        {{GetVariableProperty "cloudInitData" "provisionConfigs"}}
+# TODO: vhdbuilder support for Flatcar
+{{ if not .IsVHDDistro }}
+  - path: /opt/azure/containers/provision_cis.sh
+    mode: 0744
+    contents:
+      remote:
+        compression: gzip
+      inline: !!binary |
+        {{GetVariableProperty "cloudInitData" "provisionCIS"}}
+{{ end }}
+# TODO: check custom cloud support
+# {{/* if IsAKSCustomCloud */}}
+{{if false}}
+  - path: {{GetInitAKSCustomCloudFilepath}}
+    mode: 0744
+    contents:
+      remote:
+        compression: gzip
+      inline: !!binary |
+        {{GetVariableProperty "cloudInitData" "initAKSCustomCloud"}}
+{{end}}
+
+# TODO: what is this?
+{{- if EnableHostsConfigAgent}}
+  - path: /opt/azure/containers/reconcilePrivateHosts.sh
+    mode: 0744
+    contents:
+      remote:
+        compression: gzip
+      inline: !!binary |
+        {{GetVariableProperty "cloudInitData" "reconcilePrivateHostsScript"}}
+  - path: /etc/systemd/system/reconcile-private-hosts.service
+    mode: 0644
+    contents:
+      remote:
+        compression: gzip
+      inline: !!binary |
+        {{GetVariableProperty "cloudInitData" "reconcilePrivateHostsService"}}
+{{- end}}
+
+{{- if IsKrustlet}}
+  - path: /etc/systemd/system/krustlet.service
+    mode: 0644
+    contents:
+      remote:
+        compression: gzip
+      inline: !!binary |
+        {{GetVariableProperty "cloudInitData" "krustletSystemdService"}}
+{{ else }}
+  - path: /etc/systemd/system/kubelet.service
+    mode: 0644
+    contents:
+      remote:
+        compression: gzip
+      inline: !!binary |
+        {{GetVariableProperty "cloudInitData" "kubeletSystemdService"}}
+{{- end}}
+
+# TODO: what is this? GPU?
+{{- if IsMIGEnabledNode}}
+  - path: /etc/systemd/system/mig-partition.service
+    mode: 0644
+    contents:
+      remote:
+        compression: gzip
+      inline: !!binary |
+        {{GetVariableProperty "cloudInitData" "migPartitionSystemService"}}
+  - path: /opt/azure/containers/mig-partition.sh
+    mode: 0644
+    contents:
+      remote:
+        compression: gzip
+      inline: !!binary |
+        {{GetVariableProperty "cloudInitData" "migPartitionScript"}}
+{{end}}
+
+{{- if HasKubeletDiskType}}
+  - path: /opt/azure/containers/bind-mount.sh
+    mode: 0544
+    contents:
+      remote:
+        compression: gzip
+      inline: !!binary |
+        {{GetVariableProperty "cloudInitData" "bindMountScript"}}
+
+  - path: /etc/systemd/system/bind-mount.service
+    mode: 0644
+    contents:
+      remote:
+        compression: gzip
+      inline: !!binary |
+        {{GetVariableProperty "cloudInitData" "bindMountSystemdService"}}
+
+  - path: /etc/systemd/system/kubelet.service.d/10-bindmount.conf
+    mode: 0644
+    contents:
+      remote:
+        compression: gzip
+      inline: !!binary |
+        {{GetVariableProperty "cloudInitData" "bindMountDropin"}}
+{{end}}
+
+# TODO: vhdbuilder support for Flatcar
+# {{/* if not .IsVHDDistro */}}
+  - path: /opt/bin/health-monitor.sh
+    mode: 0544
+    contents:
+      remote:
+        compression: gzip
+      inline: !!binary |
+        {{GetVariableProperty "cloudInitData" "healthMonitorScript"}}
+
+  # TODO: overlay /opt to /usr/local?
+  - path: /etc/systemd/system/kubelet-monitor.service
+    mode: 0644
+    contents:
+      remote:
+        compression: gzip
+      inline: !!binary |
+        {{GetVariableProperty "cloudInitData" "kubeletMonitorSystemdService"}}
+
+{{if NeedsContainerd}}
+  - path: /etc/systemd/system/containerd-monitor.timer
+    mode: 0644
+    contents:
+      remote:
+        compression: gzip
+      inline: !!binary |
+        {{GetVariableProperty "cloudInitData" "containerdMonitorSystemdTimer"}}
+  - path: /etc/systemd/system/containerd-monitor.service
+    mode: 0644
+    contents:
+      remote:
+        compression: gzip
+      inline: !!binary |
+        {{GetVariableProperty "cloudInitData" "containerdMonitorSystemdService"}}
+{{- else}}
+  - path: /etc/systemd/system/docker-monitor.timer
+    mode: 0644
+    contents:
+      remote:
+        compression: gzip
+      inline: !!binary |
+        {{GetVariableProperty "cloudInitData" "dockerMonitorSystemdTimer"}}
+  - path: /etc/systemd/system/docker-monitor.service
+    mode: 0644
+    contents:
+      remote:
+        compression: gzip
+      inline: !!binary |
+        {{GetVariableProperty "cloudInitData" "dockerMonitorSystemdService"}}
+{{- end}}
+# {{/* end */}}
+
+{{- if ShouldConfigureHTTPProxy}}
+  - path: /etc/systemd/system.conf.d/proxy.conf
+    mode: "0644"
+    contents:
+      inline: |
+        [Manager]
+        {{- if HasHTTPProxy }}
+        DefaultEnvironment="HTTP_PROXY={{GetHTTPProxy}}"
+        DefaultEnvironment="http_proxy={{GetHTTPProxy}}"
+        {{- end}}
+        {{- if HasHTTPSProxy }}
+        DefaultEnvironment="HTTPS_PROXY={{GetHTTPSProxy}}"
+        DefaultEnvironment="https_proxy={{GetHTTPSProxy}}"
+        {{- end}}
+        {{- if HasNoProxy }}
+        DefaultEnvironment="NO_PROXY={{GetNoProxy}}"
+        DefaultEnvironment="no_proxy={{GetNoProxy}}"
+        {{- end}}
+  - path: /etc/systemd/system/kubelet.service.d/10-httpproxy.conf
+    mode: "0644"
+    contents:
+      remote:
+        compression: gzip
+      inline: !!binary |
+        {{GetVariableProperty "cloudInitData" "httpProxyDropin"}}
+{{- end}}
+
+{{- if ShouldConfigureHTTPProxyCA}}
+  # TODO: check references to proxyCA.pem
+  - path: /etc/ssl/certs/proxyCA.pem
+    mode: 0644
+    content: |
+      {{GetHTTPProxyCA}}
+{{- end}}
+
+{{if IsIPv6DualStackFeatureEnabled}}
+  - path: {{GetDHCPv6ServiceCSEScriptFilepath}}
+    mode: 0644
+    contents:
+      remote:
+        compression: gzip
+      inline: !!binary |
+        {{GetVariableProperty "cloudInitData" "dhcpv6SystemdService"}}
+  - path: {{GetDHCPv6ConfigCSEScriptFilepath}}
+    mode: 0644
+    contents:
+      remote:
+        compression: gzip
+      inline: !!binary |
+        {{GetVariableProperty "cloudInitData" "dhcpv6ConfigurationScript"}}
+{{end}}
+
+{{if RequiresDocker}}
+  {{if not .IsVHDDistro}}
+  - path: /etc/systemd/system/docker.service.d/clear_mount_propagation_flags.conf
+    mode: 0644
+    contents:
+      remote:
+        compression: gzip
+      inline: !!binary |
+        {{GetVariableProperty "cloudInitData" "dockerClearMountPropagationFlags"}}
+  {{end}}
+
+  - path: /etc/systemd/system/docker.service.d/exec_start.conf
+    mode: 0644
+    contents:
+      inline: |
+        [Service]
+        ExecStart=
+        ExecStart=/usr/bin/dockerd -H fd:// --storage-driver=overlay2 --bip={{GetParameter "dockerBridgeCidr"}}
+        ExecStartPost=/sbin/iptables -P FORWARD ACCEPT
+        #EOF
+
+  - path: /etc/docker/daemon.json
+    mode: 0644
+    contents:
+      inline: |
+        {
+          "live-restore": true,
+          "log-driver": "json-file",
+          "log-opts":  {
+             "max-size": "50m",
+             "max-file": "5"
+          }{{if IsNSeriesSKU}}
+          ,"default-runtime": "nvidia",
+          "runtimes": {
+             "nvidia": {
+                 "path": "/usr/bin/nvidia-container-runtime",
+                 "runtimeArgs": []
+            }
+          }{{end}}{{if HasDataDir}},
+          "data-root": "{{GetDataDir}}"{{- end}}
+        } 
+{{end}}
+
+{{if NeedsContainerd}}
+  - path: /etc/systemd/system/kubelet.service.d/10-containerd.conf
+    mode: 0644
+    contents:
+      remote:
+        compression: gzip
+      inline: !!binary |
+        {{GetVariableProperty "cloudInitData" "containerdKubeletDropin"}}
+{{if UseRuncShimV2}}
+  - path: /etc/containerd/config.toml
+    mode: 0644
+    contents:
+      inline: |
+        version = 2
+        oom_score = 0{{if HasDataDir }}
+        root = "{{GetDataDir}}"{{- end}}
+        [plugins."io.containerd.grpc.v1.cri"]
+          sandbox_image = "{{GetPodInfraContainerSpec}}"
+          [plugins."io.containerd.grpc.v1.cri".containerd]
+            {{- if TeleportEnabled }}
+            snapshotter = "teleportd"
+            disable_snapshot_annotations = false
+            {{- end}}
+            {{- if IsNSeriesSKU }}
+            default_runtime_name = "nvidia-container-runtime"
+            [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.nvidia-container-runtime]
+              runtime_type = "io.containerd.runc.v2"
+            [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.nvidia-container-runtime.options]
+              BinaryName = "/usr/bin/nvidia-container-runtime"
+            [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.untrusted]
+              runtime_type = "io.containerd.runc.v2"
+            [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.untrusted.options]
+              BinaryName = "/usr/bin/nvidia-container-runtime"
+            {{- else}}
+            default_runtime_name = "runc"
+            [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc]
+              runtime_type = "io.containerd.runc.v2"
+            [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc.options]
+              BinaryName = "/usr/bin/runc"
+            [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.untrusted]
+              runtime_type = "io.containerd.runc.v2"
+            [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.untrusted.options]
+              BinaryName = "/usr/bin/runc"
+            {{- end}}
+          {{- if and (IsKubenet) (not HasCalicoNetworkPolicy) }}
+          [plugins."io.containerd.grpc.v1.cri".cni]
+            bin_dir = "/opt/cni/bin"
+            conf_dir = "/etc/cni/net.d"
+            conf_template = "/etc/containerd/kubenet_template.conf"
+          {{- end}}
+          [plugins."io.containerd.grpc.v1.cri".registry.headers]
+            X-Meta-Source-Client = ["azure/aks"]
+        [metrics]
+          address = "0.0.0.0:10257"
+        {{- if TeleportEnabled }}
+        [proxy_plugins]
+          [proxy_plugins.teleportd]
+            type = "snapshot"
+            address = "/run/teleportd/snapshotter.sock"
+        {{- end}}
+        #EOF
+{{else}}
+  - path: /etc/containerd/config.toml
+    mode: 0644
+    contents:
+      inline: |
+        version = 2
+        subreaper = false
+        oom_score = 0{{if HasDataDir }}
+        root = "{{GetDataDir}}"{{- end}}
+        [plugins."io.containerd.grpc.v1.cri"]
+          sandbox_image = "{{GetPodInfraContainerSpec}}"
+          [plugins."io.containerd.grpc.v1.cri".containerd]
+            {{ if TeleportEnabled }}
+            snapshotter = "teleportd"
+            disable_snapshot_annotations = false
+            {{ end}}
+            [plugins."io.containerd.grpc.v1.cri".containerd.untrusted_workload_runtime]
+              runtime_type = "io.containerd.runtime.v1.linux"
+              {{- if IsNSeriesSKU}}
+              runtime_engine = "/usr/bin/nvidia-container-runtime"
+              {{- else}}
+              runtime_engine = "/usr/bin/runc"
+              {{- end}}
+            [plugins."io.containerd.grpc.v1.cri".containerd.default_runtime]
+              runtime_type = "io.containerd.runtime.v1.linux"
+              {{- if IsNSeriesSKU}}
+              runtime_engine = "/usr/bin/nvidia-container-runtime"
+              {{- else}}
+              runtime_engine = "/usr/bin/runc"
+              {{- end}}
+          {{ if and (IsKubenet) (not HasCalicoNetworkPolicy) }}
+          [plugins."io.containerd.grpc.v1.cri".cni]
+            bin_dir = "/opt/cni/bin"
+            conf_dir = "/etc/cni/net.d"
+            conf_template = "/etc/containerd/kubenet_template.conf"
+          {{ end}}
+          [plugins."io.containerd.grpc.v1.cri".registry.headers]
+            X-Meta-Source-Client = ["azure/aks"]
+        [metrics]
+          address = "0.0.0.0:10257"
+        {{ if TeleportEnabled }}
+        [proxy_plugins]
+          [proxy_plugins.teleportd]
+            type = "snapshot"
+            address = "/run/teleportd/snapshotter.sock"
+        {{ end}}
+        #EOF
+{{end}}
+  - path: /etc/containerd/kubenet_template.conf
+    mode: 0644
+    contents:
+      inline: |
+        {
+            "cniVersion": "0.3.1",
+            "name": "kubenet",
+            "plugins": [{
+              "type": "bridge",
+              "bridge": "cbr0",
+              "mtu": 1500,
+              "addIf": "eth0",
+              "isGateway": true,
+              {{- if IsIPMasqAgentEnabled}}
+              "ipMasq": false,
+              {{- else}}
+              "ipMasq": true,
+              {{- end}}
+              "promiscMode": true,
+              "hairpinMode": false,
+              "ipam": {
+                  "type": "host-local",
+                  "ranges": [{{`+"`"+`{{range $i, $range := .PodCIDRRanges}}`+"`"+`}}{{`+"`"+`{{if $i}}`+"`"+`}}, {{`+"`"+`{{end}}`+"`"+`}}[{"subnet": "{{`+"`"+`{{$range}}`+"`"+`}}"}]{{`+"`"+`{{end}}`+"`"+`}}],
+                  "routes": [{{`+"`"+`{{range $i, $route := .Routes}}`+"`"+`}}{{`+"`"+`{{if $i}}`+"`"+`}}, {{`+"`"+`{{end}}`+"`"+`}}{"dst": "{{`+"`"+`{{$route}}`+"`"+`}}"}{{`+"`"+`{{end}}`+"`"+`}}]
+              }
+            },
+            {
+              "type": "portmap",
+              "capabilities": {"portMappings": true},
+              "externalSetMarkChain": "KUBE-MARK-MASQ"
+            }]
+        }
+
+  - path: /etc/systemd/system/containerd.service
+    mode: 0644
+    contents:
+      inline: |
+        [Unit]
+        Description=containerd daemon
+        After=network.target
+
+        [Service]
+        ExecStartPre=/sbin/modprobe overlay
+        ExecStart=/usr/bin/containerd
+        Delegate=yes
+        KillMode=process
+        Restart=always
+        OOMScoreAdjust=-999
+        LimitNOFILE=1048576
+        LimitNPROC=infinity
+        LimitCORE=infinity
+
+        [Install]
+        WantedBy=multi-user.target
+
+        #EOF
+
+  - path: /etc/systemd/system/containerd.service.d/exec_start.conf
+    mode: 0644
+    contents:
+      inline: |
+        [Service]
+        ExecStartPost=/sbin/iptables -P FORWARD ACCEPT
+        #EOF
+
+  - path: /etc/crictl.yaml
+    mode: 0644
+    contents:
+      inline: |
+        runtime-endpoint: unix:///run/containerd/containerd.sock
+        #EOF
+
+  - path: /etc/sysctl.d/11-containerd.conf
+    mode: 0644
+    contents:
+      inline: |
+        net.ipv4.ip_forward = 1
+        net.ipv4.conf.all.forwarding = 1
+        net.ipv6.conf.all.forwarding = 1
+        net.bridge.bridge-nf-call-iptables = 1
+        #EOF
+
+{{if TeleportEnabled}}
+  - path: /etc/systemd/system/teleportd.service
+    mode: 0644
+    contents:
+      inline: |
+        [Unit]
+        Description=teleportd teleport runtime
+        After=network.target
+        [Service]
+        ExecStart=/usr/local/bin/teleportd --metrics --aksConfig /etc/kubernetes/azure.json
+        Delegate=yes
+        KillMode=process
+        Restart=always
+        LimitNPROC=infinity
+        LimitCORE=infinity
+        LimitNOFILE=1048576
+        TasksMax=infinity
+        [Install]
+        WantedBy=multi-user.target
+        #EOF
+{{end}}
+{{- if and IsKubenet (not HasCalicoNetworkPolicy)}}
+  - path: /etc/systemd/system/ensure-no-dup.service
+    mode: 0644
+    contents:
+      remote:
+        compression: gzip
+      inline: !!binary |
+        {{GetVariableProperty "cloudInitData" "ensureNoDupEbtablesService"}}
+
+  - path: /opt/azure/containers/ensure-no-dup.sh
+    mode: 0755
+    contents:
+      remote:
+        compression: gzip
+      inline: !!binary |
+        {{GetVariableProperty "cloudInitData" "ensureNoDupEbtablesScript"}}
+{{- end}}
+{{end}}
+
+# SKIP Flatcar: nvidia-modprobe here because that's not available out-of-the-box on
+  - path: /etc/kubernetes/certs/ca.crt
+    mode: 0644
+    contents:
+      inline: !!binary |
+        {{GetParameter "caCertificate"}}
+
+{{if not IsKubeletClientTLSBootstrappingEnabled -}}
+  - path: /etc/kubernetes/certs/client.crt
+    mode: 0644
+    contents:
+      inline: !!binary |
+        {{GetParameter "clientCertificate"}}
+{{- end}}
+
+{{if HasCustomSearchDomain}}
+  - path: {{GetCustomSearchDomainsCSEScriptFilepath}}
+    mode: 0644
+    contents:
+      remote:
+        compression: gzip
+      inline: !!binary |
+        {{GetVariableProperty "cloudInitData" "customSearchDomainsScript"}}
+{{end}}
+
+{{- if IsKubeletConfigFileEnabled}}
+  - path: /etc/systemd/system/kubelet.service.d/10-componentconfig.conf
+    mode: 0644
+    contents:
+      remote:
+        compression: gzip
+      inline: !!binary |
+        {{GetVariableProperty "cloudInitData" "componentConfigDropin"}}
+{{ end }}
+
+{{- if IsKubeletClientTLSBootstrappingEnabled }}
+  - path: /var/lib/kubelet/bootstrap-kubeconfig
+    mode: 0644
+    contents:
+      inline: |
+        apiVersion: v1
+        kind: Config
+        clusters:
+        - name: localcluster
+          cluster:
+            {{ if IsKrustlet -}}
+            certificate-authority-data: "{{GetBase64CertificateAuthorityData}}"
+            {{- else -}}
+            certificate-authority: /etc/kubernetes/certs/ca.crt
+            {{- end }}
+            server: https://{{GetKubernetesEndpoint}}:443
+        users:
+        - name: kubelet-bootstrap
+          user:
+            token: "{{GetTLSBootstrapTokenForKubeConfig}}"
+        contexts:
+        - context:
+            cluster: localcluster
+            user: kubelet-bootstrap
+          name: bootstrap-context
+        current-context: bootstrap-context
+        #EOF
+  - path: /etc/systemd/system/kubelet.service.d/10-tlsbootstrap.conf
+    mode: 0644
+    contents:
+      remote:
+        compression: gzip
+      inline: !!binary |
+        {{GetVariableProperty "cloudInitData" "tlsBootstrapDropin"}}
+{{else -}}
+  - path: /var/lib/kubelet/kubeconfig
+    mode: 0644
+    contents:
+      inline: |
+        apiVersion: v1
+        kind: Config
+        clusters:
+        - name: localcluster
+          cluster:
+            certificate-authority: /etc/kubernetes/certs/ca.crt
+            server: https://{{GetKubernetesEndpoint}}:443
+        users:
+        - name: client
+          user:
+            client-certificate: /etc/kubernetes/certs/client.crt
+            client-key: /etc/kubernetes/certs/client.key
+        contexts:
+        - context:
+            cluster: localcluster
+            user: client
+          name: localclustercontext
+        current-context: localclustercontext
+        #EOF
+{{- end}}
+
+  - path: /etc/default/kubelet
+    mode: 0644
+    contents:
+      inline: |
+        KUBELET_FLAGS={{GetKubeletConfigKeyVals}}
+        KUBELET_REGISTER_SCHEDULABLE=true
+        NETWORK_POLICY={{GetParameter "networkPolicy"}}
+    {{- if not (IsKubernetesVersionGe "1.17.0")}}
+        KUBELET_IMAGE={{GetHyperkubeImageReference}}
+    {{end}}
+    {{if IsKubernetesVersionGe "1.16.0"}}
+        KUBELET_NODE_LABELS={{GetAgentKubernetesLabels . }}
+    {{else}}
+        KUBELET_NODE_LABELS={{GetAgentKubernetesLabelsDeprecated . }}
+    {{end}}
+    {{- if IsAKSCustomCloud}}
+        AZURE_ENVIRONMENT_FILEPATH=/etc/kubernetes/{{GetTargetEnvironment}}.json
+    {{end}}
+        #EOF
+
+  - path: /opt/azure/containers/kubelet.sh
+    mode: 0755
+    contents:
+      inline: |
+        #!/bin/bash
+    {{if not IsIPMasqAgentEnabled}}
+        {{if IsAzureCNI}}
+        iptables -t nat -A POSTROUTING -m iprange ! --dst-range 168.63.129.16 -m addrtype ! --dst-type local ! -d {{GetParameter "vnetCidr"}} -j MASQUERADE
+        {{end}}
+    {{end}}
+
+        # Disallow container from reaching out to the special IP address 168.63.129.16
+        # for TCP protocol (which http uses)
+        #
+        # 168.63.129.16 contains protected settings that have priviledged info.
+        #
+        # The host can still reach 168.63.129.16 because it goes through the OUTPUT chain, not FORWARD.
+        #
+        # Note: we should not block all traffic to 168.63.129.16. For example UDP traffic is still needed
+        # for DNS.
+        iptables -I FORWARD -d 168.63.129.16 -p tcp --dport 80 -j DROP
+        #EOF
+
+  - path: /etc/sysctl.d/999-sysctl-aks.conf
+    mode: 0755
+    contents:
+      inline: |
+        # This is a partial workaround to this upstream Kubernetes issue:
+        # https://github.com/kubernetes/kubernetes/issues/41916#issuecomment-312428731
+        net.ipv4.tcp_retries2=8
+        net.core.message_burst=80
+        net.core.message_cost=40
+    {{- if GetCustomSysctlConfigByName "NetCoreSomaxconn"}}
+        net.core.somaxconn={{.CustomLinuxOSConfig.Sysctls.NetCoreSomaxconn}}
+    {{- else}}
+        net.core.somaxconn=16384
+    {{- end}}
+    {{- if GetCustomSysctlConfigByName "NetIpv4TcpMaxSynBacklog"}}
+        net.ipv4.tcp_max_syn_backlog={{.CustomLinuxOSConfig.Sysctls.NetIpv4TcpMaxSynBacklog}}
+    {{- else}}
+        net.ipv4.tcp_max_syn_backlog=16384
+    {{- end}}
+    {{- if GetCustomSysctlConfigByName "NetIpv4NeighDefaultGcThresh1"}}
+        net.ipv4.neigh.default.gc_thresh1={{.CustomLinuxOSConfig.Sysctls.NetIpv4NeighDefaultGcThresh1}}
+    {{- else}}
+        net.ipv4.neigh.default.gc_thresh1=4096
+    {{- end}}
+    {{- if GetCustomSysctlConfigByName "NetIpv4NeighDefaultGcThresh2"}}
+        net.ipv4.neigh.default.gc_thresh2={{.CustomLinuxOSConfig.Sysctls.NetIpv4NeighDefaultGcThresh2}}
+    {{- else}}
+        net.ipv4.neigh.default.gc_thresh2=8192
+    {{- end}}
+    {{- if GetCustomSysctlConfigByName "NetIpv4NeighDefaultGcThresh3"}}
+        net.ipv4.neigh.default.gc_thresh3={{.CustomLinuxOSConfig.Sysctls.NetIpv4NeighDefaultGcThresh3}}
+    {{- else}}
+        net.ipv4.neigh.default.gc_thresh3=16384
+    {{- end}}
+    {{if ShouldConfigCustomSysctl}}
+        # The following are sysctl configs passed from API
+    {{- $s:=.CustomLinuxOSConfig.Sysctls}}
+    {{- if $s.NetCoreNetdevMaxBacklog}}
+        net.core.netdev_max_backlog={{$s.NetCoreNetdevMaxBacklog}}
+    {{- end}}
+    {{- if $s.NetCoreRmemDefault}}
+        net.core.rmem_default={{$s.NetCoreRmemDefault}}
+    {{- end}}
+    {{- if $s.NetCoreRmemMax}}
+        net.core.rmem_max={{$s.NetCoreRmemMax}}
+    {{- end}}
+    {{- if $s.NetCoreWmemDefault}}
+        net.core.wmem_default={{$s.NetCoreWmemDefault}}
+    {{- end}}
+    {{- if $s.NetCoreWmemMax}}
+        net.core.wmem_max={{$s.NetCoreWmemMax}}
+    {{- end}}
+    {{- if $s.NetCoreOptmemMax}}
+        net.core.optmem_max={{$s.NetCoreOptmemMax}}
+    {{- end}}
+    {{- if $s.NetIpv4TcpMaxTwBuckets}}
+        net.ipv4.tcp_max_tw_buckets={{$s.NetIpv4TcpMaxTwBuckets}}
+    {{- end}}
+    {{- if $s.NetIpv4TcpFinTimeout}}
+        net.ipv4.tcp_fin_timeout={{$s.NetIpv4TcpFinTimeout}}
+    {{- end}}
+    {{- if $s.NetIpv4TcpKeepaliveTime}}
+        net.ipv4.tcp_keepalive_time={{$s.NetIpv4TcpKeepaliveTime}}
+    {{- end}}
+    {{- if $s.NetIpv4TcpKeepaliveProbes}}
+        net.ipv4.tcp_keepalive_probes={{$s.NetIpv4TcpKeepaliveProbes}}
+    {{- end}}
+    {{- if $s.NetIpv4TcpkeepaliveIntvl}}
+        net.ipv4.tcp_keepalive_intvl={{$s.NetIpv4TcpkeepaliveIntvl}}
+    {{- end}}
+    {{- if $s.NetIpv4TcpTwReuse}}
+        net.ipv4.tcp_tw_reuse={{BoolPtrToInt $s.NetIpv4TcpTwReuse}}
+    {{- end}}
+    {{- if $s.NetIpv4IpLocalPortRange}}
+        net.ipv4.ip_local_port_range={{$s.NetIpv4IpLocalPortRange}}
+    {{- end}}
+    {{- if $s.NetNetfilterNfConntrackMax}}
+        net.netfilter.nf_conntrack_max={{$s.NetNetfilterNfConntrackMax}}
+    {{- end}}
+    {{- if $s.NetNetfilterNfConntrackBuckets}}
+        net.netfilter.nf_conntrack_buckets={{$s.NetNetfilterNfConntrackBuckets}}
+    {{- end}}
+    {{- if $s.FsInotifyMaxUserWatches}}
+        fs.inotify.max_user_watches={{$s.FsInotifyMaxUserWatches}}
+    {{- end}}
+    {{- if $s.FsFileMax}}
+        fs.file-max={{$s.FsFileMax}}
+    {{- end}}
+    {{- if $s.FsAioMaxNr}}
+        fs.aio-max-nr={{$s.FsAioMaxNr}}
+    {{- end}}
+    {{- if $s.FsNrOpen}}
+        fs.nr_open={{$s.FsNrOpen}}
+    {{- end}}
+    {{- if $s.KernelThreadsMax}}
+        kernel.threads-max={{$s.KernelThreadsMax}}
+    {{- end}}
+    {{- if $s.VMMaxMapCount}}
+        vm.max_map_count={{$s.VMMaxMapCount}}
+    {{- end}}
+    {{- if $s.VMSwappiness}}
+        vm.swappiness={{$s.VMSwappiness}}
+    {{- end}}
+    {{- if $s.VMVfsCachePressure}}
+        vm.vfs_cache_pressure={{$s.VMVfsCachePressure}}
+    {{- end}}
+    {{- end}}
+        #EOF`)
 
 func linuxCloudInitConfigIgnYmlBytes() ([]byte, error) {
 	return _linuxCloudInitConfigIgnYml, nil

@@ -20,9 +20,13 @@ func getCustomDataVariables(config *datamodel.NodeBootstrappingConfiguration) pa
 			"provisionSource":              getBase64EncodedGzippedCustomScript(kubernetesCSEHelpersScript, config),
 			"provisionSourceUbuntu":        getBase64EncodedGzippedCustomScript(kubernetesCSEHelpersScriptUbuntu, config),
 			"provisionSourceMariner":       getBase64EncodedGzippedCustomScript(kubernetesCSEHelpersScriptMariner, config),
+			// TODO: replace with Flatcar
+			"provisionSourceFlatcar":	getBase64EncodedGzippedCustomScript(kubernetesCSEHelpersScriptUbuntu, config),
 			"provisionInstalls":            getBase64EncodedGzippedCustomScript(kubernetesCSEInstall, config),
 			"provisionInstallsUbuntu":      getBase64EncodedGzippedCustomScript(kubernetesCSEInstallUbuntu, config),
 			"provisionInstallsMariner":     getBase64EncodedGzippedCustomScript(kubernetesCSEInstallMariner, config),
+			// TODO: replace with Flatcar
+			"provisionInstallsFlatcar":      getBase64EncodedGzippedCustomScript(kubernetesCSEInstallUbuntu, config),
 			"provisionConfigs":             getBase64EncodedGzippedCustomScript(kubernetesCSEConfig, config),
 			"customSearchDomainsScript":    getBase64EncodedGzippedCustomScript(kubernetesCustomSearchDomainsScript, config),
 			"dhcpv6SystemdService":         getBase64EncodedGzippedCustomScript(dhcpv6SystemdService, config),
