@@ -18,3 +18,5 @@ require (
 	golang.org/x/sys v0.0.0-20210603081109-ebe580a85c40 // indirect
 	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
 )
+
+replace github.com/flatcar-linux/container-linux-config-transpiler => ../container-linux-config-transpiler

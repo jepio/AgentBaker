@@ -49,8 +49,8 @@ const (
 
 // cloud-init (i.e. ARM customData) source file references
 const (
-	kubernetesNodeCustomDataYaml      = "linux/cloud-init/nodecustomdata.yml"
-	 // TODO(ace): or cloud-config and convert to ignition? 
+	kubernetesNodeCustomDataYaml = "linux/cloud-init/nodecustomdata.yml"
+	// TODO(ace): or cloud-config and convert to ignition?
 	kubernetesFlatcarCustomData       = "linux/cloud-init/config.ign.yml"
 	kubernetesCSECommandString        = "linux/cloud-init/artifacts/cse_cmd.sh"
 	kubernetesCSEStartScript          = "linux/cloud-init/artifacts/cse_start.sh"
@@ -102,6 +102,7 @@ const (
 
 // cloud-init destination file references
 const (
+	cseScriptDir                         = "/opt/azure/containers"
 	customCloudConfigCSEScriptFilepath   = "/opt/azure/containers/provision_configs_custom_cloud.sh"
 	cseHelpersScriptFilepath             = "/opt/azure/containers/provision_source.sh"
 	cseHelpersScriptDistroFilepath       = "/opt/azure/containers/provision_source_distro.sh"

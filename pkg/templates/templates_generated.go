@@ -4248,19 +4248,13 @@ func linuxCloudInitArtifactsUbuntuCse_install_ubuntuSh() (*asset, error) {
 
 var _linuxCloudInitConfigIgnYml = []byte(`storage:
   files:
-  - path: /etc/hostname
-    filesystem: "root"
+  - path: {{GetCSEHelpersScriptFilepath}}
     mode: 0644
     contents:
-      inline: |
-        {
-            "TODO": "POPULATE_ME",
-            "HELPFUL_DATA": {
-                "server": "https://{{GetKubernetesEndpoint}}:443",
-                "token": "{{GetTLSBootstrapTokenForKubeConfig}}"
-            },
-            "I_KNOW_THIS_ISNT_REAL_IGNITION": true
-        }
+      remote:
+        compression: gzip
+      inline: !!binary |
+        {{GetVariableProperty "cloudInitData" "provisionSource"}}
 `)
 
 func linuxCloudInitConfigIgnYmlBytes() ([]byte, error) {

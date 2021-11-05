@@ -733,6 +733,9 @@ func getContainerServiceFuncMap(config *datamodel.NodeBootstrappingConfiguration
 		"AKSCustomCloudResourceIdentifiersStorage": func() string {
 			return cs.Properties.CustomCloudEnv.ResourceIdentifiers.Storage
 		},
+		"GetCSEHelpersScriptDir": func() string {
+			return cseScriptDir
+		},
 		"GetCSEHelpersScriptFilepath": func() string {
 			return cseHelpersScriptFilepath
 		},
