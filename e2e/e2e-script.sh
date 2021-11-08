@@ -2,13 +2,19 @@
 source e2e-helper.sh
 echo "Starting e2e tests"
 
+set -ueo pipefail
+
 : "${SUBSCRIPTION_ID:=8ecadfc9-d1a3-4ea4-b844-0d9f87e4d7c8}" #Azure Container Service - Test Subscription
 : "${RESOURCE_GROUP_NAME:=agentbaker-e2e-tests}"
 : "${LOCATION:=eastus}"
 : "${CLUSTER_NAME:=agentbaker-e2e-test-cluster}"
 
 # Clear the kube/config file for any conflicts
+mkdir -p ~/.kube
 truncate -s 0 ~/.kube/config
+
+# Might be necessary to run this on the subscription first:
+# az provider register -n 'Microsoft.ContainerService'
 
 # Create a resource group for the cluster
 if [ $(az group exists -n $RESOURCE_GROUP_NAME --subscription $SUBSCRIPTION_ID) == "false" ]; then
@@ -47,8 +53,10 @@ az vmss run-command invoke \
 
 declare -a files=("apiserver.crt" "ca.crt" "client.key" "client.crt")
 for file in "${files[@]}"; do
-    sleep 60s
-    content=$(az vmss run-command invoke \
+    sleep 20s
+    for i in $(seq 1 6); do
+        set +e
+        content=$(az vmss run-command invoke \
                 -n $VMSS_NAME \
                 -g $MC_RESOURCE_GROUP_NAME \
                 --command-id RunShellScript \
@@ -56,9 +64,17 @@ for file in "${files[@]}"; do
                 --scripts "cat /etc/kubernetes/certs/$file" | \
                 jq -r '.value[].message' | \
                 awk '/stdout/{flag=1;next}/stderr/{flag=0}flag' | \
-                awk NF | base64 \
-            )
-    addJsonToFile $file $content
+                awk NF | base64 --wrap=0 \
+                )
+        retval=$?
+        set -e
+        if [ "$retval" -ne 0 ]; then
+            sleep 10s
+            continue
+        fi
+        addJsonToFile "$file" "$content"
+        break;
+    done
 done
 
 # Add other relevant information needed by AgentBaker for bootstrapping later
@@ -141,6 +157,7 @@ fi
 # Run a nginx pod on the node to check if pod runs
 ( echo "cat <<EOF >pod-nginx.yaml";
   cat pod-nginx-template.yaml;
+  echo "EOF";
 ) >temp.yaml
 . temp.yaml
 
