@@ -43,11 +43,12 @@ type customDataFields struct {
 	Clientcert                        string  `json:"client.crt"`
 	Fqdn                              string  `json:"fqdn"`
 	Mode                              string  `json:"mode"`
-	Name		                      string  `json:"nodepoolname"`
+	Name                              string  `json:"nodepoolname"`
 	NodeImageVersion                  string  `json:"nodeImageVersion"`
 	TenantID                          string  `json:"tenantID"`
 	MCRGName                          string  `json:"mcRGName"`
 	ClusterID                         string  `json:"clusterID"`
 	SubID                             string  `json:"subID"`
 	TLSBootstrapToken                 string  `json:"tlsbootstraptoken"`
+	KubernetesVersion                 string  `json:"kubernetesVersion"`
 }

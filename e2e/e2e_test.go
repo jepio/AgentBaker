@@ -59,7 +59,7 @@ func TestE2EBasic(t *testing.T) {
 			ClusterID: values.ClusterID,
 			OrchestratorProfile: &datamodel.OrchestratorProfile{
 				OrchestratorType:    datamodel.Kubernetes,
-				OrchestratorVersion: "1.19.9",
+				OrchestratorVersion: values.KubernetesVersion,
 				KubernetesConfig: &datamodel.KubernetesConfig{
 					NetworkPlugin:                     "kubenet",
 					LoadBalancerSku:                   "Standard",
@@ -77,8 +77,8 @@ func TestE2EBasic(t *testing.T) {
 					CloudProviderRateLimitBucketWrite: values.CloudProviderRateLimitBucketWrite,
 					CloudProviderDisableOutboundSNAT:  to.BoolPtr(values.DisableOutboundSNAT),
 					MaximumLoadBalancerRuleCount:      values.MaximumLoadBalancerRuleCount,
-					CustomKubeBinaryURL:               "https://acs-mirror.azureedge.net/kubernetes/v1.19.9-hotfix.20210322/binaries/kubernetes-node-linux-amd64.tar.gz",
-					CustomKubeProxyImage:              "mcr.microsoft.com/oss/kubernetes/kube-proxy:v1.19.9-hotfix.20210322.1",
+					CustomKubeBinaryURL:               "https://acs-mirror.azureedge.net/kubernetes/v" + values.KubernetesVersion + "/binaries/kubernetes-node-linux-amd64.tar.gz",
+					CustomKubeProxyImage:              "mcr.microsoft.com/oss/kubernetes/kube-proxy:v" + values.KubernetesVersion,
 					AzureCNIURLLinux:                  "https://acs-mirror.azureedge.net/azure-cni/v1.1.8/binaries/azure-vnet-cni-linux-amd64-v1.1.8.tgz",
 				},
 			},
@@ -129,12 +129,10 @@ func TestE2EBasic(t *testing.T) {
 	baker := agent.InitializeTemplateGenerator()
 
 	pauseImage := "mcr.microsoft.com/oss/kubernetes/pause:3.5"
-	hyperkubeImage := "mcr.microsoft.com/oss/kubernetes/"
 	windowsPackage := "windowspackage" //dummy string because not needed for our purpose, might want to align it better
 
 	k8sComponents := &datamodel.K8sComponents{
 		PodInfraContainerImageURL: pauseImage,
-		HyperkubeImageURL:         hyperkubeImage,
 		WindowsPackageURL:         windowsPackage,
 	}
 

@@ -28,3 +28,8 @@ getTenantID() {
     tenantID=$(jq -r '.identity.tenantId' < cluster_info.json)
     addJsonToFile "tenantID" $tenantID
 }
+
+getK8SVersion() {
+    k8sVersion=$(jq -r '.kubernetesVersion' < cluster_info.json)
+    addJsonToFile "kubernetesVersion" $k8sVersion
+}

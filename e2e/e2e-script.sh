@@ -81,6 +81,7 @@ done
 getAgentPoolProfileValues
 getFQDN
 getMSIResourceID
+getK8SVersion
 
 addJsonToFile "mcRGName" $MC_RESOURCE_GROUP_NAME
 addJsonToFile "clusterID" $CLUSTER_ID
