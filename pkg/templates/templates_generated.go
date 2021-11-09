@@ -4246,7 +4246,60 @@ func linuxCloudInitArtifactsUbuntuCse_install_ubuntuSh() (*asset, error) {
 	return a, nil
 }
 
-var _linuxCloudInitConfigIgnYml = []byte(`storage:
+var _linuxCloudInitConfigIgnYml = []byte(`systemd:
+  units:
+  - name: usr-local-bin.mount
+    enabled: true
+    contents: |
+      [Unit]
+      Description=Bind mount
+
+      [Mount]
+      What=/opt/bin
+      Where=/usr/local/bin
+      Type=none
+      Options=bind
+
+      [Install]
+      WantedBy=local-fs.target
+  - name: usr-local-sbin.mount
+    enabled: true
+    contents: |
+      [Unit]
+      Description=Bind mount
+
+      [Mount]
+      What=/opt/sbin
+      Where=/usr/local/sbin
+      Type=none
+      Options=bind
+
+      [Install]
+      WantedBy=local-fs.target
+  - name: usr-libexec.mount
+    enabled: true
+    contents: |
+      [Unit]
+      Description=Kubernetes flex volume plugin directory
+
+      [Mount]
+      What=overlay
+      Where=/usr/libexec
+      Type=overlay
+      Options=lowerdir=/usr/libexec,workdir=/opt/libexec.work,upperdir=/opt/libexec
+
+      [Install]
+      WantedBy=local-fs.target
+storage:
+  directories:
+  - path: /opt/libexec
+    mode: 0755
+  - path: /opt/libexec.work
+    mode: 0700
+  - path: /opt/bin
+    mode: 0755
+  - path: /opt/sbin
+    mode: 0755
   files:
   - path: {{GetCSEHelpersScriptFilepath}}
     mode: 0644
@@ -4279,6 +4332,14 @@ var _linuxCloudInitConfigIgnYml = []byte(`storage:
         compression: gzip
       inline: !!binary |
         {{GetVariableProperty "cloudInitData" "provisionScript"}}
+
+  - path: {{GetCSEInstallScriptFilepath}}
+    mode: 0744
+    contents:
+      remote:
+        compression: gzip
+      inline: !!binary |
+        {{GetVariableProperty "cloudInitData" "provisionInstalls"}}
 
   - path: {{GetCSEInstallScriptDistroFilepath}}
     mode: 0744
@@ -5020,7 +5081,8 @@ var _linuxCloudInitConfigIgnYml = []byte(`storage:
         vm.vfs_cache_pressure={{$s.VMVfsCachePressure}}
     {{- end}}
     {{- end}}
-        #EOF`)
+        #EOF
+`)
 
 func linuxCloudInitConfigIgnYmlBytes() ([]byte, error) {
 	return _linuxCloudInitConfigIgnYml, nil
