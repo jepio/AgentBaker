@@ -529,9 +529,6 @@ var _ = Describe("Assert generated customData and cseCmd", func() {
 			}
 			config.ContainerService.Properties.HostedMasterProfile.FQDN = "foobarbaz.hcp.southcentralus.azmk8s.io"
 			config.ContainerService.Properties.AgentPoolProfiles[0].Distro = datamodel.AKSFlatcar
-			config.ContainerService.Properties.AgentPoolProfiles[0].KubernetesConfig = &datamodel.KubernetesConfig{
-				ContainerRuntime: datamodel.Containerd,
-			}
 			config.KubeletClientTLSBootstrapToken = to.StringPtr("07401b.f395accd246ae52d")
 			config.OSSKU = "Flatcar"
 		}),
