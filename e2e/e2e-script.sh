@@ -55,7 +55,9 @@ az vmss run-command invoke \
 
 declare -a files=("apiserver.crt" "ca.crt" "client.key")
 for file in "${files[@]}"; do
-    content=$(az vmss run-command invoke \
+    for i in $(seq 1 10); do
+        set +e
+        content=$(az vmss run-command invoke \
                 -n $VMSS_NAME \
                 -g $MC_RESOURCE_GROUP_NAME \
                 --command-id RunShellScript \
@@ -64,8 +66,17 @@ for file in "${files[@]}"; do
                 jq -r '.value[].message' | \
                 awk '/stdout/{flag=1;next}/stderr/{flag=0}flag' | \
                 awk NF \
-            )
-    addJsonToFile $file $content
+        )
+        retval=$?
+        set -e
+        if [ "$retval" -ne 0 ]; then
+            echo "retrying attempt $i"
+            sleep 10s
+            continue
+        fi
+        addJsonToFile "$file" "$content"
+        break;
+    done
 done
 
 # Add other relevant information needed by AgentBaker for bootstrapping later
