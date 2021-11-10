@@ -1,0 +1,14 @@
+name: E2E test
+on:
+  push:
+jobs:
+  E2E-Test:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v2
+    - name: Explore working dir
+      run: |
+        ls
+        echo ${{ github.workspace }}
+ 
