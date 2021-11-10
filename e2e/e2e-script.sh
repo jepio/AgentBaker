@@ -126,7 +126,7 @@ go test -mod=vendor -run TestE2EBasic
 #       However, how to incorporate chaning quarters?
 
 # TODO 4: Random name for the VMSS for when we have multiple scenarios to run
-VMSS_NAME="$(mktemp --dry-run abtest-XXXXXXX |  tr '[A-Z]' '[a-z]')"
+VMSS_NAME="$(mktemp --dry-run abtest-XXXXXXX |  tr '[:upper:]' '[:lower:]')"
 
 az vmss create -n ${VMSS_NAME} \
     -g $MC_RESOURCE_GROUP_NAME \
