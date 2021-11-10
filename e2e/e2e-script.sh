@@ -1,4 +1,5 @@
 #!/bin/bash
+set -euxo pipefail
 source e2e-helper.sh
 echo "Starting e2e tests"
 
@@ -26,8 +27,9 @@ fi
 if [ -z $(az aks list -g $RESOURCE_GROUP_NAME | jq '.[].name') ]; then
     echo "Cluster doesnt exist, creating"
     az aks create -g $RESOURCE_GROUP_NAME -n $CLUSTER_NAME --node-count 1 --generate-ssh-keys
-    az aks get-credentials -g $RESOURCE_GROUP_NAME -n $CLUSTER_NAME
 fi
+
+az aks get-credentials -g $RESOURCE_GROUP_NAME -n $CLUSTER_NAME
 
 # Store the contents of az aks show to a file to reduce API call overhead
 az aks show -n $CLUSTER_NAME -g $RESOURCE_GROUP_NAME > cluster_info.json
@@ -51,30 +53,19 @@ az vmss run-command invoke \
 #       an error saying that extension is still being applied. Need to introduce some delay before this piece of code is
 #       called and the file is ready to be read else the whole flow will break. 
 
-declare -a files=("apiserver.crt" "ca.crt" "client.key" "client.crt")
+declare -a files=("apiserver.crt" "ca.crt" "client.key")
 for file in "${files[@]}"; do
-    sleep 20s
-    for i in $(seq 1 6); do
-        set +e
-        content=$(az vmss run-command invoke \
+    content=$(az vmss run-command invoke \
                 -n $VMSS_NAME \
                 -g $MC_RESOURCE_GROUP_NAME \
                 --command-id RunShellScript \
                 --instance-id 0 \
-                --scripts "cat /etc/kubernetes/certs/$file" | \
+                --scripts "cat /etc/kubernetes/certs/$file | base64 -w 0" | \
                 jq -r '.value[].message' | \
                 awk '/stdout/{flag=1;next}/stderr/{flag=0}flag' | \
-                awk NF | base64 --wrap=0 \
-                )
-        retval=$?
-        set -e
-        if [ "$retval" -ne 0 ]; then
-            sleep 10s
-            continue
-        fi
-        addJsonToFile "$file" "$content"
-        break;
-    done
+                awk NF \
+            )
+    addJsonToFile $file $content
 done
 
 # Add other relevant information needed by AgentBaker for bootstrapping later
@@ -87,8 +78,9 @@ addJsonToFile "mcRGName" $MC_RESOURCE_GROUP_NAME
 addJsonToFile "clusterID" $CLUSTER_ID
 addJsonToFile "subID" $SUBSCRIPTION_ID
 
+# TODO(ace): generate fresh bootstrap token since one on node will expire.
 # Check if TLS Bootstrapping is enabled(no client.crt in that case, retrieve the tlsbootstrap token)
-sleep 60s
+sleep 30s
 tlsbootstrap=$(az vmss run-command invoke \
                 -n $VMSS_NAME \
                 -g $MC_RESOURCE_GROUP_NAME \
@@ -114,8 +106,10 @@ go test -mod=vendor -run TestE2EBasic
 #       However, how to incorporate chaning quarters?
 
 # TODO 4: Random name for the VMSS for when we have multiple scenarios to run
+export RANDOM="$(tr -dc '[:lower:]' < /dev/urandom | fold -w 8 | head -n 1)"
+export VMSS_NAME="abtest-$RANDOM"
 
-az vmss create -n agentbaker-test-vmss \
+az vmss create -n ${VMSS_NAME} \
     -g $MC_RESOURCE_GROUP_NAME \
     --admin-username azureuser \
     --custom-data cloud-init.txt \
@@ -128,19 +122,19 @@ az vmss create -n agentbaker-test-vmss \
 
 # Get the name of the VM instance to later check with kubectl get nodes
 vmInstanceName=$(az vmss list-instances \
-                -n agentbaker-test-vmss \
+                -n ${VMSS_NAME} \
                 -g $MC_RESOURCE_GROUP_NAME | \
                 jq -r '.[].osProfile.computerName'
             )
 export vmInstanceName
 
 # Generate the extension from cseCmd
-jq -Rs '{commandToExecute: . }' cseCmd > settings.json
+jq -Rs '{commandToExecute: . }' csecmd > settings.json
 
 # Apply extension to the VM
 az vmss extension set --resource-group $MC_RESOURCE_GROUP_NAME \
     --name CustomScript \
-    --vmss-name agentbaker-test-vmss \
+    --vmss-name ${VMSS_NAME} \
     --publisher Microsoft.Azure.Extensions \
     --protected-settings settings.json \
     --version 2.0
@@ -156,12 +150,7 @@ else
 fi
 
 # Run a nginx pod on the node to check if pod runs
-( echo "cat <<EOF >pod-nginx.yaml";
-  cat pod-nginx-template.yaml;
-  echo "EOF";
-) >temp.yaml
-. temp.yaml
-
+envsubst < pod-nginx-template.yaml > temp.yaml
 kubectl apply -f pod-nginx.yaml
 
 # Sleep to let Pod Status=Running
