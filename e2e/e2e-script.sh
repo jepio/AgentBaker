@@ -107,7 +107,7 @@ else
 fi
 
 # Call AgentBaker to generate CustomData and cseCmd
-go test -run TestE2EBasic
+go test -mod=vendor -run TestE2EBasic
 
 # Create a test VMSS with 1 instance 
 # TODO 3: Discuss about the --image version, probably go with aks-ubuntu-1804-gen2-2021-q2:latest
