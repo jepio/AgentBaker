@@ -85,7 +85,6 @@ func (t *TemplateGenerator) getFlatcarLinuxNodeCustomDataJSONObject(config *data
 		panic(e)
 	}
 
-	fmt.Println(str)
 	clc, ast, reports := clct.Parse([]byte(str))
 	if (len(reports.Entries) > 0) || reports.IsFatal() {
 		panic(fmt.Errorf("error parsing Container Linux Config: %v", reports.String()))
