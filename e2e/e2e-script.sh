@@ -140,7 +140,7 @@ vmInstanceName=$(az vmss list-instances \
 export vmInstanceName
 
 # Generate the extension from cseCmd
-jq -Rs '{commandToExecute: . }' csecmd > settings.json
+jq -Rs '{commandToExecute: . }' cseCmd > settings.json
 
 # Apply extension to the VM
 az vmss extension set --resource-group $MC_RESOURCE_GROUP_NAME \
