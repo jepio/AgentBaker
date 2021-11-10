@@ -1,14 +1,21 @@
 name: E2E test
 on:
   push:
+env:
+  RESOURCE_GROUP_NAME: agentbaker-test-${{ github.run_id }}-rg
+  LOCATION: westeurope
+  SUBSCRIPTION_ID: ${{ secrets.SUBSCRIPTION_ID }}
 jobs:
   E2E-Test:
     runs-on: ubuntu-latest
     steps:
     - name: Check out code
       uses: actions/checkout@v2
-    - name: Explore working dir
+    - name: Run e2e test
       run: |
-        ls
-        echo ${{ github.workspace }}
- 
+        cd e2e
+        bash -x e2e-script.sh
+    - name: Cleanup
+      if: ${{ always() }}
+      run: |
+        echo cleanup complete
