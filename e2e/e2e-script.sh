@@ -91,8 +91,9 @@ addJsonToFile "subID" $SUBSCRIPTION_ID
 
 # TODO(ace): generate fresh bootstrap token since one on node will expire.
 # Check if TLS Bootstrapping is enabled(no client.crt in that case, retrieve the tlsbootstrap token)
-sleep 30s
-tlsbootstrap=$(az vmss run-command invoke \
+for i in $(seq 1 10); do
+    set +e
+    tlsbootstrap=$(az vmss run-command invoke \
                 -n $VMSS_NAME \
                 -g $MC_RESOURCE_GROUP_NAME \
                 --command-id RunShellScript \
@@ -101,8 +102,15 @@ tlsbootstrap=$(az vmss run-command invoke \
                 jq -r '.value[].message' | \
                 grep "token" | \
                 cut -f2 -d ":" | tr -d '"'
-            )
-
+    )
+    retval=$?
+    set -e
+    if [ "$retval" -ne 0 ]; then
+        echo "retrying attempt $i"
+        sleep 10s
+        continue
+    fi
+done
 if [[ -z "${tlsbootstrap}" ]]; then
     echo "TLS Bootstrap disabled"
 else
