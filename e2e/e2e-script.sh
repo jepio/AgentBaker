@@ -110,6 +110,7 @@ for i in $(seq 1 10); do
         sleep 10s
         continue
     fi
+    break;
 done
 if [[ -z "${tlsbootstrap}" ]]; then
     echo "TLS Bootstrap disabled"
