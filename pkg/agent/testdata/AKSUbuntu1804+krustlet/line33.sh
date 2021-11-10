@@ -77,14 +77,20 @@ else
     echo "Golden image; skipping dependencies installation"
 fi
 
-installContainerRuntime
+# Flatcar has containerd/docker/runc builtin
+if [[ $OS == $UBUNTU_OS_NAME ]]; then
+    installContainerRuntime
+fi
 installNetworkPlugin
 
     downloadKrustlet
 
 installKubeletKubectlAndKubeProxy
 
-ensureRPC
+# Flatcar: not available
+if [[ $OS == $UBUNTU_OS_NAME ]]; then
+  ensureRPC
+fi
 
 createKubeManifestDir
 

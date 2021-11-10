@@ -1853,7 +1853,10 @@ else
     echo "Golden image; skipping dependencies installation"
 fi
 
-installContainerRuntime
+# Flatcar has containerd/docker/runc builtin
+if [[ $OS == $UBUNTU_OS_NAME ]]; then
+    installContainerRuntime
+fi
 {{- if and NeedsContainerd TeleportEnabled}}
 installTeleportdPlugin
 {{- end}}
@@ -1890,7 +1893,10 @@ set -x
 
 installKubeletKubectlAndKubeProxy
 
-ensureRPC
+# Flatcar: not available
+if [[ $OS == $UBUNTU_OS_NAME ]]; then
+  ensureRPC
+fi
 
 createKubeManifestDir
 
@@ -4300,7 +4306,15 @@ storage:
     mode: 0755
   - path: /opt/sbin
     mode: 0755
+  # TODO: broken? haven't investigated, maybe I just missed regenerating.
+  - path: /var/log/azure
+    mode: 0755
   files:
+  - path: /etc/tmpfiles.d/var-log-azure.conf
+    mode: 0644
+    contents:
+      inline: |
+        d /var/log/azure 0755 - - -
   - path: {{GetCSEHelpersScriptFilepath}}
     mode: 0644
     contents:

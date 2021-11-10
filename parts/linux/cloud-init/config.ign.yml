@@ -52,9 +52,15 @@ storage:
     mode: 0755
   - path: /opt/sbin
     mode: 0755
+  # TODO: broken? haven't investigated, maybe I just missed regenerating.
   - path: /var/log/azure
     mode: 0755
   files:
+  - path: /etc/tmpfiles.d/var-log-azure.conf
+    mode: 0644
+    contents:
+      inline: |
+        d /var/log/azure 0755 - - -
   - path: {{GetCSEHelpersScriptFilepath}}
     mode: 0644
     contents:

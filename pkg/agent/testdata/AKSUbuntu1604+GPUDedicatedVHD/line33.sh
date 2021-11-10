@@ -74,7 +74,10 @@ else
     echo "Golden image; skipping dependencies installation"
 fi
 
-installContainerRuntime
+# Flatcar has containerd/docker/runc builtin
+if [[ $OS == $UBUNTU_OS_NAME ]]; then
+    installContainerRuntime
+fi
 installNetworkPlugin
 
 echo $(date),$(hostname), "Start configuring GPU drivers"
@@ -94,7 +97,10 @@ echo $(date),$(hostname), "End configuring GPU drivers"
 
 installKubeletKubectlAndKubeProxy
 
-ensureRPC
+# Flatcar: not available
+if [[ $OS == $UBUNTU_OS_NAME ]]; then
+  ensureRPC
+fi
 
 createKubeManifestDir
 
