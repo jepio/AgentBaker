@@ -162,9 +162,13 @@ az vmss extension set --resource-group $MC_RESOURCE_GROUP_NAME \
 # Sleep to let the automatic upgrade of the VM finish
 sleep 60s
 
+NODE_JOINED=0
+POD_STARTED=0
 # Check if the node joined the cluster
+kubectl get nodes
 if kubectl get nodes | grep -q $vmInstanceName; then
 	echo "Test succeeded, node joined the cluster"
+        NODE_JOINED=1
 else
 	echo "Node did not join cluster"
 fi
@@ -176,8 +180,12 @@ kubectl apply -f pod-nginx.yaml
 # Sleep to let Pod Status=Running
 sleep 60s
 
+kubectl get pods -o wide
 if kubectl get pods -o wide | grep -q 'Running'; then
     echo "Pod ran successfully"
+    POD_STARTED=1
 else
     echo "Pod pending/not running"
 fi
+
+[ "${NODE_JOINED}" -eq 1 ] && [ "${POD_STARTED}" -eq 1 ]
