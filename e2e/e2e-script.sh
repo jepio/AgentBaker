@@ -37,6 +37,7 @@ az aks show -n $CLUSTER_NAME -g $RESOURCE_GROUP_NAME > cluster_info.json
 MC_RESOURCE_GROUP_NAME=$(jq -r '.nodeResourceGroup' < cluster_info.json)
 VMSS_NAME=$(az vmss list -g $MC_RESOURCE_GROUP_NAME | jq -r '.[length -1].name')
 CLUSTER_ID=$(echo $VMSS_NAME | cut -d '-' -f3)
+IMAGE="kinvolk:flatcar-container-linux-free:stable:latest"
 
 # Retrieve the etc/kubernetes/azure.json file for cluster related info
 az vmss run-command invoke \
@@ -88,6 +89,7 @@ getK8SVersion
 addJsonToFile "mcRGName" $MC_RESOURCE_GROUP_NAME
 addJsonToFile "clusterID" $CLUSTER_ID
 addJsonToFile "subID" $SUBSCRIPTION_ID
+addJsonToFile "nodeImageVersion" "${IMAGE}"
 
 # TODO(ace): generate fresh bootstrap token since one on node will expire.
 # Check if TLS Bootstrapping is enabled(no client.crt in that case, retrieve the tlsbootstrap token)
@@ -136,7 +138,7 @@ az vmss create -n ${VMSS_NAME} \
     --vm-sku Standard_DS2_v2 \
     --instance-count 1 \
     --assign-identity $msiResourceID \
-    --image "microsoft-aks:aks:aks-ubuntu-1804-gen2-2021-q2:2021.05.19" \
+    --image "${IMAGE}" \
     --upgrade-policy-mode Automatic
 
 # Get the name of the VM instance to later check with kubectl get nodes

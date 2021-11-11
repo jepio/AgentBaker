@@ -98,9 +98,9 @@ func TestE2EBasic(t *testing.T) {
 						"kubernetes.azure.com/mode":               "system", //values.Mode,
 					},
 					KubernetesConfig: &datamodel.KubernetesConfig{
-						ContainerRuntime: datamodel.Containerd,
+						ContainerRuntime: datamodel.Docker,
 					},
-					Distro: datamodel.AKSUbuntuContainerd1804Gen2,
+					Distro: datamodel.AKSFlatcar,
 				},
 			},
 			LinuxProfile: &datamodel.LinuxProfile{
@@ -142,6 +142,9 @@ func TestE2EBasic(t *testing.T) {
 		"--authentication-token-webhook":      "true",
 		"--authorization-mode":                "Webhook",
 		"--azure-container-registry-config":   "/etc/kubernetes/azure.json",
+		// TODO: Flatcar find a better location/way to configure this.
+		// Current Flatcar stable requires the systemd setting.
+		"--cgroup-driver":                     "systemd",
 		"--cgroups-per-qos":                   "true",
 		"--client-ca-file":                    "/etc/kubernetes/certs/ca.crt",
 		"--cloud-config":                      "/etc/kubernetes/azure.json",
@@ -178,6 +181,7 @@ func TestE2EBasic(t *testing.T) {
 
 	config := &datamodel.NodeBootstrappingConfiguration{
 		ContainerService:               cs,
+		OSSKU:                          "Flatcar",
 		CloudSpecConfig:                datamodel.AzurePublicCloudSpecForTest,
 		K8sComponents:                  k8sComponents,
 		AgentPoolProfile:               agentPool,
