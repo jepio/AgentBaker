@@ -4254,6 +4254,19 @@ func linuxCloudInitArtifactsUbuntuCse_install_ubuntuSh() (*asset, error) {
 
 var _linuxCloudInitConfigIgnYml = []byte(`systemd:
   units:
+  - name: agentbaker-decompress-scripts.service
+    enabled: true
+    contents: |
+      [Unit]
+      Description=decompress scripts
+
+      [Service]
+      Type=oneshot
+      RemainAfterExit=yes
+      ExecStart=/bin/bash /opt/bin/agentbaker-decompress-scripts.sh
+
+      [Install]
+      WantedBy=local-fs.target
   - name: usr-local-bin.mount
     enabled: true
     contents: |
@@ -4310,12 +4323,20 @@ storage:
   - path: /var/log/azure
     mode: 0755
   files:
+  - path: /opt/bin/agentbaker-decompress-scripts.sh
+    mode: 0755
+    contents:
+      inline: |
+        #!/bin/bash
+        for dir in /opt/bin /opt/azure /etc/systemd; do
+          find $dir -name '*.gz' -exec gzip -dv {} \;
+        done
   - path: /etc/tmpfiles.d/var-log-azure.conf
     mode: 0644
     contents:
       inline: |
         d /var/log/azure 0755 - - -
-  - path: {{GetCSEHelpersScriptFilepath}}
+  - path: {{GetCSEHelpersScriptFilepath}}.gz
     mode: 0644
     contents:
       remote:
@@ -4323,7 +4344,7 @@ storage:
       inline: !!binary |
         {{GetVariableProperty "cloudInitData" "provisionSource"}}
 
-  - path: {{GetCSEHelpersScriptDistroFilepath}}
+  - path: {{GetCSEHelpersScriptDistroFilepath}}.gz
     mode: 0744
     contents:
       remote:
@@ -4331,7 +4352,7 @@ storage:
       inline: !!binary |
         {{GetVariableProperty "cloudInitData" "provisionSourceFlatcar"}}
 
-  - path: /opt/azure/containers/provision_start.sh
+  - path: /opt/azure/containers/provision_start.sh.gz
     mode: 0744
     contents:
       remote:
@@ -4339,7 +4360,7 @@ storage:
       inline: !!binary |
         {{GetVariableProperty "cloudInitData" "provisionStartScript"}}
 
-  - path: /opt/azure/containers/provision.sh
+  - path: /opt/azure/containers/provision.sh.gz
     mode: 0744
     contents:
       remote:
@@ -4347,7 +4368,7 @@ storage:
       inline: !!binary |
         {{GetVariableProperty "cloudInitData" "provisionScript"}}
 
-  - path: {{GetCSEInstallScriptFilepath}}
+  - path: {{GetCSEInstallScriptFilepath}}.gz
     mode: 0744
     contents:
       remote:
@@ -4355,7 +4376,7 @@ storage:
       inline: !!binary |
         {{GetVariableProperty "cloudInitData" "provisionInstalls"}}
 
-  - path: {{GetCSEInstallScriptDistroFilepath}}
+  - path: {{GetCSEInstallScriptDistroFilepath}}.gz
     mode: 0744
     contents:
       remote:
@@ -4363,7 +4384,7 @@ storage:
       inline: !!binary |
         {{GetVariableProperty "cloudInitData" "provisionInstallsFlatcar"}}
 
-  - path: {{GetCSEConfigScriptFilepath}}
+  - path: {{GetCSEConfigScriptFilepath}}.gz
     mode: 0744
     contents:
       remote:
@@ -4372,7 +4393,7 @@ storage:
         {{GetVariableProperty "cloudInitData" "provisionConfigs"}}
 # TODO: vhdbuilder support for Flatcar
 {{ if not .IsVHDDistro }}
-  - path: /opt/azure/containers/provision_cis.sh
+  - path: /opt/azure/containers/provision_cis.sh.gz
     mode: 0744
     contents:
       remote:
@@ -4383,7 +4404,7 @@ storage:
 # TODO: check custom cloud support
 # {{/* if IsAKSCustomCloud */}}
 {{if false}}
-  - path: {{GetInitAKSCustomCloudFilepath}}
+  - path: {{GetInitAKSCustomCloudFilepath}}.gz
     mode: 0744
     contents:
       remote:
@@ -4394,14 +4415,14 @@ storage:
 
 # TODO: what is this?
 {{- if EnableHostsConfigAgent}}
-  - path: /opt/azure/containers/reconcilePrivateHosts.sh
+  - path: /opt/azure/containers/reconcilePrivateHosts.sh.gz
     mode: 0744
     contents:
       remote:
         compression: gzip
       inline: !!binary |
         {{GetVariableProperty "cloudInitData" "reconcilePrivateHostsScript"}}
-  - path: /etc/systemd/system/reconcile-private-hosts.service
+  - path: /etc/systemd/system/reconcile-private-hosts.service.gz
     mode: 0644
     contents:
       remote:
@@ -4411,7 +4432,7 @@ storage:
 {{- end}}
 
 {{- if IsKrustlet}}
-  - path: /etc/systemd/system/krustlet.service
+  - path: /etc/systemd/system/krustlet.service.gz
     mode: 0644
     contents:
       remote:
@@ -4419,7 +4440,7 @@ storage:
       inline: !!binary |
         {{GetVariableProperty "cloudInitData" "krustletSystemdService"}}
 {{ else }}
-  - path: /etc/systemd/system/kubelet.service
+  - path: /etc/systemd/system/kubelet.service.gz
     mode: 0644
     contents:
       remote:
@@ -4430,14 +4451,14 @@ storage:
 
 # TODO: what is this? GPU?
 {{- if IsMIGEnabledNode}}
-  - path: /etc/systemd/system/mig-partition.service
+  - path: /etc/systemd/system/mig-partition.service.gz
     mode: 0644
     contents:
       remote:
         compression: gzip
       inline: !!binary |
         {{GetVariableProperty "cloudInitData" "migPartitionSystemService"}}
-  - path: /opt/azure/containers/mig-partition.sh
+  - path: /opt/azure/containers/mig-partition.sh.gz
     mode: 0644
     contents:
       remote:
@@ -4447,7 +4468,7 @@ storage:
 {{end}}
 
 {{- if HasKubeletDiskType}}
-  - path: /opt/azure/containers/bind-mount.sh
+  - path: /opt/azure/containers/bind-mount.sh.gz
     mode: 0544
     contents:
       remote:
@@ -4455,7 +4476,7 @@ storage:
       inline: !!binary |
         {{GetVariableProperty "cloudInitData" "bindMountScript"}}
 
-  - path: /etc/systemd/system/bind-mount.service
+  - path: /etc/systemd/system/bind-mount.service.gz
     mode: 0644
     contents:
       remote:
@@ -4463,7 +4484,7 @@ storage:
       inline: !!binary |
         {{GetVariableProperty "cloudInitData" "bindMountSystemdService"}}
 
-  - path: /etc/systemd/system/kubelet.service.d/10-bindmount.conf
+  - path: /etc/systemd/system/kubelet.service.d/10-bindmount.conf.gz
     mode: 0644
     contents:
       remote:
@@ -4474,7 +4495,7 @@ storage:
 
 # TODO: vhdbuilder support for Flatcar
 # {{/* if not .IsVHDDistro */}}
-  - path: /opt/bin/health-monitor.sh
+  - path: /opt/bin/health-monitor.sh.gz
     mode: 0544
     contents:
       remote:
@@ -4483,7 +4504,7 @@ storage:
         {{GetVariableProperty "cloudInitData" "healthMonitorScript"}}
 
   # TODO: overlay /opt to /usr/local?
-  - path: /etc/systemd/system/kubelet-monitor.service
+  - path: /etc/systemd/system/kubelet-monitor.service.gz
     mode: 0644
     contents:
       remote:
@@ -4492,14 +4513,14 @@ storage:
         {{GetVariableProperty "cloudInitData" "kubeletMonitorSystemdService"}}
 
 {{if NeedsContainerd}}
-  - path: /etc/systemd/system/containerd-monitor.timer
+  - path: /etc/systemd/system/containerd-monitor.timer.gz
     mode: 0644
     contents:
       remote:
         compression: gzip
       inline: !!binary |
         {{GetVariableProperty "cloudInitData" "containerdMonitorSystemdTimer"}}
-  - path: /etc/systemd/system/containerd-monitor.service
+  - path: /etc/systemd/system/containerd-monitor.service.gz
     mode: 0644
     contents:
       remote:
@@ -4507,14 +4528,14 @@ storage:
       inline: !!binary |
         {{GetVariableProperty "cloudInitData" "containerdMonitorSystemdService"}}
 {{- else}}
-  - path: /etc/systemd/system/docker-monitor.timer
+  - path: /etc/systemd/system/docker-monitor.timer.gz
     mode: 0644
     contents:
       remote:
         compression: gzip
       inline: !!binary |
         {{GetVariableProperty "cloudInitData" "dockerMonitorSystemdTimer"}}
-  - path: /etc/systemd/system/docker-monitor.service
+  - path: /etc/systemd/system/docker-monitor.service.gz
     mode: 0644
     contents:
       remote:
@@ -4542,7 +4563,7 @@ storage:
         DefaultEnvironment="NO_PROXY={{GetNoProxy}}"
         DefaultEnvironment="no_proxy={{GetNoProxy}}"
         {{- end}}
-  - path: /etc/systemd/system/kubelet.service.d/10-httpproxy.conf
+  - path: /etc/systemd/system/kubelet.service.d/10-httpproxy.conf.gz
     mode: "0644"
     contents:
       remote:
@@ -4560,14 +4581,14 @@ storage:
 {{- end}}
 
 {{if IsIPv6DualStackFeatureEnabled}}
-  - path: {{GetDHCPv6ServiceCSEScriptFilepath}}
+  - path: {{GetDHCPv6ServiceCSEScriptFilepath}}.gz
     mode: 0644
     contents:
       remote:
         compression: gzip
       inline: !!binary |
         {{GetVariableProperty "cloudInitData" "dhcpv6SystemdService"}}
-  - path: {{GetDHCPv6ConfigCSEScriptFilepath}}
+  - path: {{GetDHCPv6ConfigCSEScriptFilepath}}.gz
     mode: 0644
     contents:
       remote:
@@ -4578,7 +4599,7 @@ storage:
 
 {{if RequiresDocker}}
   {{if not .IsVHDDistro}}
-  - path: /etc/systemd/system/docker.service.d/clear_mount_propagation_flags.conf
+  - path: /etc/systemd/system/docker.service.d/clear_mount_propagation_flags.conf.gz
     mode: 0644
     contents:
       remote:
@@ -4620,7 +4641,7 @@ storage:
 {{end}}
 
 {{if NeedsContainerd}}
-  - path: /etc/systemd/system/kubelet.service.d/10-containerd.conf
+  - path: /etc/systemd/system/kubelet.service.d/10-containerd.conf.gz
     mode: 0644
     contents:
       remote:
@@ -4832,7 +4853,7 @@ storage:
         #EOF
 {{end}}
 {{- if and IsKubenet (not HasCalicoNetworkPolicy)}}
-  - path: /etc/systemd/system/ensure-no-dup.service
+  - path: /etc/systemd/system/ensure-no-dup.service.gz
     mode: 0644
     contents:
       remote:
@@ -4840,7 +4861,7 @@ storage:
       inline: !!binary |
         {{GetVariableProperty "cloudInitData" "ensureNoDupEbtablesService"}}
 
-  - path: /opt/azure/containers/ensure-no-dup.sh
+  - path: /opt/azure/containers/ensure-no-dup.sh.gz
     mode: 0755
     contents:
       remote:
@@ -4866,7 +4887,7 @@ storage:
 {{- end}}
 
 {{if HasCustomSearchDomain}}
-  - path: {{GetCustomSearchDomainsCSEScriptFilepath}}
+  - path: {{GetCustomSearchDomainsCSEScriptFilepath}}.gz
     mode: 0644
     contents:
       remote:
@@ -4876,7 +4897,7 @@ storage:
 {{end}}
 
 {{- if IsKubeletConfigFileEnabled}}
-  - path: /etc/systemd/system/kubelet.service.d/10-componentconfig.conf
+  - path: /etc/systemd/system/kubelet.service.d/10-componentconfig.conf.gz
     mode: 0644
     contents:
       remote:
@@ -4912,7 +4933,7 @@ storage:
           name: bootstrap-context
         current-context: bootstrap-context
         #EOF
-  - path: /etc/systemd/system/kubelet.service.d/10-tlsbootstrap.conf
+  - path: /etc/systemd/system/kubelet.service.d/10-tlsbootstrap.conf.gz
     mode: 0644
     contents:
       remote:

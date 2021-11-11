@@ -85,9 +85,24 @@ func (t *TemplateGenerator) getFlatcarLinuxNodeCustomDataJSONObject(config *data
 		panic(e)
 	}
 
+	// TODO: Flatcar: all of these code paths panic on error - is there no better solution?
 	clc, ast, reports := clct.Parse([]byte(str))
 	if (len(reports.Entries) > 0) || reports.IsFatal() {
 		panic(fmt.Errorf("error parsing Container Linux Config: %v", reports.String()))
+	}
+
+	for i, file := range clc.Storage.Files {
+		if file.Contents.Remote.Compression == "gzip" && !strings.HasSuffix(file.Path, ".gz") {
+			panic(fmt.Errorf("compressed file is missing .gz suffix: %v", file.Path))
+		}
+		if file.Contents.Remote.Compression == "gzip" &&
+			!(strings.HasPrefix(file.Path, "/etc/systemd") ||
+				strings.HasPrefix(file.Path, "/opt/azure") ||
+				strings.HasPrefix(file.Path, "/opt/bin")) {
+			panic(fmt.Errorf("compressed file outside dirs that will be decompressed: %v", file.Path))
+		}
+		// ignition doesn't accept compressed files
+		clc.Storage.Files[i].Contents.Remote.Compression = ""
 	}
 	ign, report := clct.Convert(clc, "", ast)
 	if (len(report.Entries) > 0) || report.IsFatal() {
