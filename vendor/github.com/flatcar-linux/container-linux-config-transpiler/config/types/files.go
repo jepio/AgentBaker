@@ -15,7 +15,6 @@
 package types
 
 import (
-	"encoding/base64"
 	"errors"
 	"flag"
 	"fmt"
@@ -130,19 +129,6 @@ func (fc FileContents) Validate() report.Report {
 	return report.Report{}
 }
 
-func makeDataUrl(contents []byte) string {
-	opaque := "," + dataurl.Escape(contents)
-	b64 := ";base64," + base64.StdEncoding.EncodeToString(contents)
-	if len(b64) < len(opaque) {
-		opaque = b64
-	}
-	uri := (&url.URL{
-		Scheme: "data",
-		Opaque: opaque,
-	}).String()
-	return uri
-}
-
 func init() {
 	register(func(in Config, ast astnode.AstNode, out ignTypes.Config, platform string) (ignTypes.Config, report.Report, astnode.AstNode) {
 		r := report.Report{}
@@ -181,7 +167,10 @@ func init() {
 
 			if file.Contents.Inline != "" {
 				newFile.Contents = ignTypes.FileContents{
-					Source: makeDataUrl([]byte(file.Contents.Inline)),
+					Source: (&url.URL{
+						Scheme: "data",
+						Opaque: "," + dataurl.EscapeString(file.Contents.Inline),
+					}).String(),
 				}
 			}
 
@@ -214,7 +203,10 @@ func init() {
 
 				// Include the contents of the local file as if it were provided inline.
 				newFile.Contents = ignTypes.FileContents{
-					Source: makeDataUrl(contents),
+					Source: (&url.URL{
+						Scheme: "data",
+						Opaque: "," + dataurl.Escape(contents),
+					}).String(),
 				}
 			}
 
