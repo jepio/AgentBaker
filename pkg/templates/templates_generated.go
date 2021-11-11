@@ -4336,6 +4336,15 @@ storage:
     contents:
       inline: |
         d /var/log/azure 0755 - - -
+  - path: /etc/sysctl.d/90-kubelet.conf
+    mode: 0644
+    contents:
+      inline: |
+        # These are required by kubelet but only get applied through CIS sysctl
+        # in vhdbuilder
+        vm.overcommit_memory = 1
+        kernel.panic = 10
+        kernel.panic_on_oops = 1
   - path: {{GetCSEHelpersScriptFilepath}}.gz
     mode: 0644
     contents:
@@ -5010,7 +5019,7 @@ storage:
         #EOF
 
   - path: /etc/sysctl.d/999-sysctl-aks.conf
-    mode: 0755
+    mode: 0644
     contents:
       inline: |
         # This is a partial workaround to this upstream Kubernetes issue:
