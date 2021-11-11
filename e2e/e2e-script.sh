@@ -88,7 +88,6 @@ getK8SVersion
 addJsonToFile "mcRGName" $MC_RESOURCE_GROUP_NAME
 addJsonToFile "clusterID" $CLUSTER_ID
 addJsonToFile "subID" $SUBSCRIPTION_ID
-addJsonToFile "nodeImageVersion" "AKSFlatcar-stable-latest"
 
 # TODO(ace): generate fresh bootstrap token since one on node will expire.
 # Check if TLS Bootstrapping is enabled(no client.crt in that case, retrieve the tlsbootstrap token)
@@ -168,7 +167,7 @@ POD_STARTED=0
 kubectl get nodes
 if kubectl get nodes | grep -q $vmInstanceName; then
 	echo "Test succeeded, node joined the cluster"
-        NODE_JOINED=1
+	NODE_JOINED=1
 else
 	echo "Node did not join cluster"
 fi

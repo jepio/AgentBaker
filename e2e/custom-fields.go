@@ -43,7 +43,7 @@ type customDataFields struct {
 	Clientcert                        string  `json:"client.crt"`
 	Fqdn                              string  `json:"fqdn"`
 	Mode                              string  `json:"mode"`
-	Name                              string  `json:"nodepoolname"`
+	Name                              string  `json:"name"`
 	NodeImageVersion                  string  `json:"nodeImageVersion"`
 	TenantID                          string  `json:"tenantID"`
 	MCRGName                          string  `json:"mcRGName"`
