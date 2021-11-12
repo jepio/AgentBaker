@@ -8,6 +8,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"strings"
 
 	"github.com/vincent-petithory/dataurl"
 )
@@ -40,7 +41,7 @@ func main() {
 			log.Fatal(err)
 		}
 		data := bytes.NewBuffer(dataUrl.Data)
-		if (v.Contents.Compression == "gzip") {
+		if (v.Contents.Compression == "gzip") || strings.HasSuffix(v.Path, ".gz") {
 			decompressedData, err := gzip.NewReader(data)
 			if err != nil {
 				log.Fatal(err)
