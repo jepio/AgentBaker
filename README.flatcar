@@ -1,0 +1,79 @@
+# Developing
+
+Ignore any binaries, the whole point of this repository is to convert the
+contents of `parts/linux/cloud-init/` into `pkg/templates/templates_generated.go`.
+This passes through `getFlatcarLinuxNodeCustomDataJSONObject()` in `pkg/agent/baker.go`,
+which is where the whole logic of config transpilation is contained. The AgentBaker flow is
+that there is CustomData (ignition) and CSE (custom script extension) which are used to join
+nodes to an AKS cluster.
+
+`make generate` generates the template file. A side effect of the generation is
+that test cases in `pkg/agent/baker_test.go` are processed and the output lands
+in `pkg/agent/testdata/Flatcar/...` for inspection.
+
+I wrote a small utility that might be useful:
+```
+cd hack/tools/ign-unpack
+go build
+ign-unpack < ../../../pkg/agent/testdata/Flatcar/CustomData
+```
+
+# Testing
+
+```
+# prepare env
+export SUBSCRIPTION_ID=...
+export RESOURCE_GROUP_NAME=jepio-aks-rg
+export LOCATION=westeurope
+export CLUSTER_NAME=agentbaker-e2e-test-cluster
+az login
+
+cd e2e
+bash e2e-script.sh
+```
+
+# Debugging
+
+Google 'how to ssh aks node'
+
+```
+name=$(kubectl get nodes -o name)
+kubectl debug ${name} -it --image=mcr.microsoft.com/aks/fundamental/base-ubuntu:v0.0.11
+kubectl get pods
+# extract name of debug pod
+kubectl port-forward node-debugger-aks-nodepool1-... 2022:22
+
+eval $(ssh-agent)
+ssh-add ~/.ssh/id_rsa
+
+ssh -A -p 2022 localhost
+# usually .5 is the second node, sometimes it's .6
+ssh 10.240.0.5
+```
+
+# Other hints
+
+* ignition data is too large. Originally I tried to make use of ignition support
+  for compressed data, but this is not available in stock Flatcar images so
+  instead, the files are all called <name>.gz now and there is a systemd unit
+  that decompresses them at runtime `agentbaker-decompress-scripts.service`.
+
+  The logic is in getFlatcarLinuxNodeCustomDataJSONObject() and it modifies the
+  passed yaml so be careful (`contents.remote.compression` is reset).  Be
+  careful.
+
+* there are bind mounts included by default: /usr/local/{bin,sbin} is actually
+  /opt/{bin,sbin} and /usr/libexec is an overlay from /opt/libexec. Be aware of
+  paths.
+
+* CSE command can be executed from a shell using the following:
+  ```
+  sudo su
+  . /etc/profile
+  bash csecmd
+  ```
+  The script output is in `/var/log/azure/*.log`, use a second shell.
+
+* cgroup2 - no awareness in AgentBaker, for now cgroup-driver=systemd is enabled
+  in the e2e/ directory but there is no parameter for it. Current Flatcar
+  requires cgroup-driver=systemd, so we'll need a way to specify that.
