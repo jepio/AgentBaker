@@ -4322,6 +4322,9 @@ storage:
   # TODO: broken? haven't investigated, maybe I just missed regenerating.
   - path: /var/log/azure
     mode: 0755
+  links:
+  - path: /opt/bin/nc
+    target: /usr/bin/ncat
   files:
   - path: /opt/bin/agentbaker-decompress-scripts.sh
     mode: 0755
