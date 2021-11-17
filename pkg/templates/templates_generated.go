@@ -4254,6 +4254,10 @@ func linuxCloudInitArtifactsUbuntuCse_install_ubuntuSh() (*asset, error) {
 
 var _linuxCloudInitConfigIgnYml = []byte(`systemd:
   units:
+  - name: update-engine.service
+    mask: true
+  - name: locksmithd.service
+    mask: true
   - name: agentbaker-decompress-scripts.service
     enabled: true
     contents: |
