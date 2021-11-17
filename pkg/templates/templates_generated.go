@@ -4657,6 +4657,13 @@ storage:
 {{end}}
 
 {{if NeedsContainerd}}
+  - path: /etc/systemd/system/containerd.service.d/10-use-custom-config.conf
+    mode: 0644
+    contents:
+      inline: |
+        [Service]
+        ExecStart=
+        ExecStart=/usr/bin/containerd
   - path: /etc/systemd/system/kubelet.service.d/10-containerd.conf.gz
     mode: 0644
     contents:
@@ -4685,20 +4692,24 @@ storage:
               runtime_type = "io.containerd.runc.v2"
             [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.nvidia-container-runtime.options]
               BinaryName = "/usr/bin/nvidia-container-runtime"
+              SystemdCgroup = true
             [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.untrusted]
               runtime_type = "io.containerd.runc.v2"
             [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.untrusted.options]
               BinaryName = "/usr/bin/nvidia-container-runtime"
+              SystemdCgroup = true
             {{- else}}
             default_runtime_name = "runc"
             [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc]
               runtime_type = "io.containerd.runc.v2"
             [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc.options]
               BinaryName = "/usr/bin/runc"
+              SystemdCgroup = true
             [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.untrusted]
               runtime_type = "io.containerd.runc.v2"
             [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.untrusted.options]
               BinaryName = "/usr/bin/runc"
+              SystemdCgroup = true
             {{- end}}
           {{- if and (IsKubenet) (not HasCalicoNetworkPolicy) }}
           [plugins."io.containerd.grpc.v1.cri".cni]
@@ -4747,6 +4758,13 @@ storage:
               {{- else}}
               runtime_engine = "/usr/bin/runc"
               {{- end}}
+            # does not work yet
+            [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc.options]
+              SystemdCgroup = true
+            [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.untrusted.options]
+              SystemdCgroup = true
+            [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.nvidia-container-runtime.options]
+              SystemdCgroup = true
           {{ if and (IsKubenet) (not HasCalicoNetworkPolicy) }}
           [plugins."io.containerd.grpc.v1.cri".cni]
             bin_dir = "/opt/cni/bin"
@@ -4797,30 +4815,6 @@ storage:
               "externalSetMarkChain": "KUBE-MARK-MASQ"
             }]
         }
-
-  - path: /etc/systemd/system/containerd.service
-    mode: 0644
-    contents:
-      inline: |
-        [Unit]
-        Description=containerd daemon
-        After=network.target
-
-        [Service]
-        ExecStartPre=/sbin/modprobe overlay
-        ExecStart=/usr/bin/containerd
-        Delegate=yes
-        KillMode=process
-        Restart=always
-        OOMScoreAdjust=-999
-        LimitNOFILE=1048576
-        LimitNPROC=infinity
-        LimitCORE=infinity
-
-        [Install]
-        WantedBy=multi-user.target
-
-        #EOF
 
   - path: /etc/systemd/system/containerd.service.d/exec_start.conf
     mode: 0644

@@ -98,7 +98,7 @@ func TestE2EBasic(t *testing.T) {
 						"kubernetes.azure.com/mode":               "system", //values.Mode,
 					},
 					KubernetesConfig: &datamodel.KubernetesConfig{
-						ContainerRuntime: datamodel.Docker,
+						ContainerRuntime: datamodel.Containerd,
 					},
 					Distro: datamodel.AKSFlatcar,
 				},
@@ -192,6 +192,7 @@ func TestE2EBasic(t *testing.T) {
 		ConfigGPUDriverIfNeeded:        true,
 		EnableGPUDevicePluginIfNeeded:  false,
 		EnableKubeletConfigFile:        false,
+		EnableRuncShimV2:               true,
 		EnableNvidia:                   false,
 		FIPSEnabled:                    false,
 		KubeletClientTLSBootstrapToken: to.StringPtr(values.TLSBootstrapToken),
