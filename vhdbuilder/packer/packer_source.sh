@@ -74,7 +74,7 @@ copyPackerFiles() {
   cpAndMode $KUBELET_MONITOR_SERVICE_SRC $KUBELET_MONITOR_SERVICE_DEST 644
   cpAndMode $CONTAINERD_MONITOR_SERVICE_SRC $CONTAINERD_MONITOR_SERVICE_DEST 644
   cpAndMode $CONTAINERD_MONITOR_TIMER_SRC $CONTAINERD_MONITOR_TIMER_DEST 644
-  if [[ $OS != $MARINER_OS_NAME ]]; then
+  if [[ $OS != $MARINER_OS_NAME ]] && [ "$(grep -m 1 '^ID=flatcar' /etc/os-release || true)" = "" ]; then
     cpAndMode $DOCKER_MONITOR_SERVICE_SRC $DOCKER_MONITOR_SERVICE_DEST 644
     cpAndMode $DOCKER_MONITOR_TIMER_SRC $DOCKER_MONITOR_TIMER_DEST 644
     cpAndMode $DOCKER_CLEAR_MOUNT_PROPAGATION_FLAGS_SRC $DOCKER_CLEAR_MOUNT_PROPAGATION_FLAGS_DEST 644
@@ -92,5 +92,6 @@ copyPackerFiles() {
 
 cpAndMode() {
   src=$1; dest=$2; mode=$3
+  rm -f "$dest"
   DIR=$(dirname "$dest") && mkdir -p ${DIR} && cp $src $dest && chmod $mode $dest || exit $ERR_PACKER_COPY_FILE
 }

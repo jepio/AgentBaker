@@ -25,6 +25,13 @@ cat components.json > ${COMPONENTS_FILEPATH}
 cat ${THIS_DIR}/kube-proxy-images.json > ${KUBE_PROXY_IMAGES_FILEPATH}
 echo "Starting build on " $(date) > ${VHD_LOGS_FILEPATH}
 
+if [ "$(grep -m 1 '^ID=flatcar' /etc/os-release || true)" != "" ]; then
+  mkdir -p /opt/bin /opt/sbin
+  mount --bind /opt/bin /usr/local/bin
+  mount --bind /opt/sbin /usr/local/sbin
+  systemctl start containerd
+fi
+
 if [[ $OS == $MARINER_OS_NAME ]]; then
   chmod 755 /opt
   chmod 755 /opt/azure
@@ -127,7 +134,9 @@ if [[ ${CONTAINER_RUNTIME:-""} == "containerd" ]]; then
   cliTool="ctr"
 
   # also pre-download Teleportd plugin for containerd
-  downloadTeleportdPlugin ${TELEPORTD_PLUGIN_DOWNLOAD_URL} "0.8.0"
+  if [ "$TELEPORTD_PLUGIN_DOWNLOAD_URL" != "TODO" ]; then
+    downloadTeleportdPlugin ${TELEPORTD_PLUGIN_DOWNLOAD_URL} "0.8.0"
+  fi
 else
   CONTAINER_RUNTIME="docker"
   MOBY_VERSION="19.03.14"

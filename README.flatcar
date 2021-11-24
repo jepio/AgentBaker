@@ -77,3 +77,13 @@ ssh 10.240.0.5
 * cgroup2 - no awareness in AgentBaker, for now cgroup-driver=systemd is enabled
   in the e2e/ directory but there is no parameter for it. Current Flatcar
   requires cgroup-driver=systemd, so we'll need a way to specify that.
+
+# Image building
+
+Currently being worked on (not fully tested yet)
+
+```
+BUILD_NUMBER=TODO BUILD_ID=TODO FEATURE_FLAGS=TODO TELEPORTD_PLUGIN_DOWNLOAD_URL=TODO GIT_VERSION=TODO OS_VERSION=$(curl -fsSL https://stable.release.flatcar-linux.net/amd64-usr/current/version.txt | grep FLATCAR_VERSION= | cut -d = -f 2) CONTAINER_RUNTIME=containerd ENABLE_FIPS=false AZURE_VM_SIZE=Standard_DS2_v2 HYPERV_GENERATION=V2 OS_TYPE=Linux AZURE_RESOURCE_GROUP_NAME=… AZURE_LOCATION=… SUBSCRIPTION_ID=… CLIENT_ID=… CLIENT_SECRET=… TENANT_ID=… OS_SKU=Flatcar MODE=gen2Mode make -f packer.mk run-packer
+```
+TODO: review error messages
+TODO: add a -sig.json variant and support MODE=sigMode
