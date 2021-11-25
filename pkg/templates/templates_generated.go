@@ -324,7 +324,7 @@ assignRootPW() {
     SALT=$(openssl rand -base64 5)
     SECRET=$(openssl rand -base64 37)
     CMD="import crypt, getpass, pwd; print crypt.crypt('$SECRET', '\$6\$$SALT\$')"
-    HASH=$(python -c "$CMD")
+    HASH=$(PATH="$PATH:/usr/share/oem/python/bin" python -c "$CMD")
 
     echo 'root:'$HASH | /usr/sbin/chpasswd -e || exit $ERR_CIS_ASSIGN_FILE_PERMISSION
   fi
@@ -373,7 +373,9 @@ assignFilePermissions() {
         chmod 0600 /etc/crontab || exit $ERR_CIS_ASSIGN_FILE_PERMISSION
     fi
     for filepath in /etc/cron.hourly /etc/cron.daily /etc/cron.weekly /etc/cron.monthly /etc/cron.d; do
-      chmod 0600 $filepath || exit $ERR_CIS_ASSIGN_FILE_PERMISSION
+      if [[ -f $filepath ]]; then
+        chmod 0600 $filepath || exit $ERR_CIS_ASSIGN_FILE_PERMISSION
+      fi
     done
 }
 
@@ -4407,7 +4409,6 @@ storage:
         compression: gzip
       inline: !!binary |
         {{GetVariableProperty "cloudInitData" "provisionConfigs"}}
-# TODO: vhdbuilder support for Flatcar
 {{ if not .IsVHDDistro }}
   - path: /opt/azure/containers/provision_cis.sh.gz
     mode: 0744
@@ -4509,8 +4510,7 @@ storage:
         {{GetVariableProperty "cloudInitData" "bindMountDropin"}}
 {{end}}
 
-# TODO: vhdbuilder support for Flatcar
-# {{/* if not .IsVHDDistro */}}
+{{if not .IsVHDDistro}}
   - path: /opt/bin/health-monitor.sh.gz
     mode: 0544
     contents:
@@ -4559,7 +4559,7 @@ storage:
       inline: !!binary |
         {{GetVariableProperty "cloudInitData" "dockerMonitorSystemdService"}}
 {{- end}}
-# {{/* end */}}
+{{end}}
 
 {{- if ShouldConfigureHTTPProxy}}
   - path: /etc/systemd/system.conf.d/proxy.conf

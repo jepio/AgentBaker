@@ -153,7 +153,6 @@ storage:
         compression: gzip
       inline: !!binary |
         {{GetVariableProperty "cloudInitData" "provisionConfigs"}}
-# TODO: vhdbuilder support for Flatcar
 {{ if not .IsVHDDistro }}
   - path: /opt/azure/containers/provision_cis.sh.gz
     mode: 0744
@@ -255,8 +254,7 @@ storage:
         {{GetVariableProperty "cloudInitData" "bindMountDropin"}}
 {{end}}
 
-# TODO: vhdbuilder support for Flatcar
-# {{/* if not .IsVHDDistro */}}
+{{if not .IsVHDDistro}}
   - path: /opt/bin/health-monitor.sh.gz
     mode: 0544
     contents:
@@ -305,7 +303,7 @@ storage:
       inline: !!binary |
         {{GetVariableProperty "cloudInitData" "dockerMonitorSystemdService"}}
 {{- end}}
-# {{/* end */}}
+{{end}}
 
 {{- if ShouldConfigureHTTPProxy}}
   - path: /etc/systemd/system.conf.d/proxy.conf

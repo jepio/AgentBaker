@@ -136,8 +136,10 @@ az vmss create -n ${VMSS_NAME} \
     --vm-sku Standard_DS2_v2 \
     --instance-count 1 \
     --assign-identity $msiResourceID \
-    --image "kinvolk:flatcar-container-linux-free:stable-gen2:latest" \
+    --image /subscriptions/3be1ff13-7eef-458c-b1ef-97a01af1b2f4/resourceGroups/kai-dev/providers/Microsoft.Compute/galleries/PackerSigGalleryEastUS/images/Flatcar298321Gen2/versions/1.0.1637929647 \
+    --plan-name stable-gen2 --plan-product flatcar-container-linux-free --plan-publisher kinvolk \
     --upgrade-policy-mode Automatic
+# or use "kinvolk:flatcar-container-linux-free:stable-gen2:latest" for a stock image
 
 # Get the name of the VM instance to later check with kubectl get nodes
 vmInstanceName=$(az vmss list-instances \

@@ -439,7 +439,9 @@ if [[ $OS == $UBUNTU_OS_NAME ]]; then
   # update message-of-the-day to start after multi-user.target
   # multi-user.target usually start at the end of the boot sequence
   sed -i 's/After=network-online.target/After=multi-user.target/g' /lib/systemd/system/motd-news.service
+fi
 
+if [[ $OS == $UBUNTU_OS_NAME ]] || [ "$(grep -m 1 '^ID=flatcar' /etc/os-release || true)" != "" ]; then
   # TODO(ace): this apparently doesn't do anything for Mariner,
   # which likely means images aren't cached at all? 
   #

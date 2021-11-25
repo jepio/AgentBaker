@@ -177,6 +177,7 @@ var AKSDistrosAvailableOnVHD []Distro = []Distro{
 	AKSUbuntuFipsContainerd1804Gen2,
 	AKSUbuntuFipsGPUContainerd1804,
 	AKSUbuntuFipsGPUContainerd1804Gen2,
+	AKSFlatcar,
 }
 
 func (d Distro) IsVHDDistro() bool {
