@@ -136,7 +136,7 @@ az vmss create -n ${VMSS_NAME} \
     --vm-sku Standard_DS2_v2 \
     --instance-count 1 \
     --assign-identity $msiResourceID \
-    --image "kinvolk:flatcar-container-linux-free:stable:latest" \
+    --image "kinvolk:flatcar-container-linux-free:stable-gen2:latest" \
     --upgrade-policy-mode Automatic
 
 # Get the name of the VM instance to later check with kubectl get nodes
