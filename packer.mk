@@ -24,10 +24,13 @@ else
 endif
 else ifeq (${OS_SKU},Flatcar)
 ifeq (${MODE},gen2Mode)
-	@echo "${MODE}: Building with Hyper-v generation 2 VM and save to Classic Storage Account"
+	@echo "${MODE}: Building with Hyper-v generation 2 VM"
 	@packer build -var-file=vhdbuilder/packer/settings.json vhdbuilder/packer/vhd-image-builder-flatcar-gen2.json
+else ifeq (${MODE},sigMode)
+	@echo "${MODE}: Building with Hyper-v generation 1 VM and save to Shared Image Gallery"
+	@packer build -var-file=vhdbuilder/packer/settings.json vhdbuilder/packer/vhd-image-builder-flatcar-sig.json
 else
-	$(error only gen2Mode supported, rest unimplemented)
+	$(error only gen2Mode and sigMode supported, rest unimplemented)
 endif
 else
 	$(error OS_SKU was invalid ${OS_SKU})
