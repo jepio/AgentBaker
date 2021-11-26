@@ -29,6 +29,8 @@ if [ "$(grep -m 1 '^ID=flatcar' /etc/os-release || true)" != "" ]; then
   mkdir -p /opt/bin /opt/sbin
   mount --bind /opt/bin /usr/local/bin
   mount --bind /opt/sbin /usr/local/sbin
+  # Prevent unexpected update reboots
+  systemctl stop update-engine locksmithd
   systemctl start containerd
 fi
 
