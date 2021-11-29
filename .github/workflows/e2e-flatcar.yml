@@ -1,0 +1,31 @@
+name: Flatcar E2E test
+on:
+  push:
+env:
+  RESOURCE_GROUP_NAME: agentbaker-flatcar-${{ github.run_id }}-rg
+  LOCATION: westeurope
+  SUBSCRIPTION_ID: ${{ secrets.SUBSCRIPTION_ID }}
+  CLUSTER_NAME: agentbaker-e2e-flatcar-cluster
+jobs:
+  E2E-Test:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v2
+
+    - uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+    - name: Run Flatcar e2e test
+      run: |
+        az account show
+        cd e2e
+        bash -x e2e-script.sh flatcar
+
+    - name: Cleanup
+      if: ${{ always() }}
+      run: |
+        #az aks delete -g $RESOURCE_GROUP_NAME -n $CLUSTER_NAME
+        az group delete -g $RESOURCE_GROUP_NAME --yes --no-wait || true
+        az logout

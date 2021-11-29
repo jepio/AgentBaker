@@ -14,7 +14,23 @@ err() {
     printf "\\033[1;31m%s\\033[0m\\n" "$*"
 }
 
-log "Starting e2e tests"
+if [ $# -lt 1 ]; then
+  err "Usage: $0 ubuntu|flatcar"
+  exit 1
+fi
+TEST_OS="$1"
+
+if [ "${TEST_OS}" = ubuntu ]; then
+  IMAGE_ARGS="--image microsoft-aks:aks:aks-ubuntu-1804-gen2-2021-q2:2021.05.19"
+elif [ "${TEST_OS}" = flatcar ]; then
+  IMAGE_ARGS="--plan-name stable-gen2 --plan-product flatcar-container-linux-free --plan-publisher kinvolk --image /subscriptions/3be1ff13-7eef-458c-b1ef-97a01af1b2f4/resourceGroups/kai-dev/providers/Microsoft.Compute/galleries/PackerSigGalleryEastUS/images/Flatcar298321Gen2/versions/1.0.1637929647"
+  # Note: The stock image kinvolk:flatcar-container-linux-free:stable-gen2:latest can only be used if IsVHDDistro is adjusted
+else
+  err "Unsupported OS argument: \"${TEST_OS}\""
+  exit 1
+fi
+
+log "Starting ${TEST_OS} e2e tests"
 
 : "${SUBSCRIPTION_ID:=8ecadfc9-d1a3-4ea4-b844-0d9f87e4d7c8}" #Azure Container Service - Test Subscription
 : "${RESOURCE_GROUP_NAME:=agentbaker-e2e-tests}"
@@ -149,6 +165,7 @@ else
 fi
 
 # Call AgentBaker to generate CustomData and cseCmd
+export TEST_OS
 go test -mod=vendor -run TestE2EBasic
 
 # Create a test VMSS with 1 instance 
@@ -166,10 +183,8 @@ az vmss create -n ${VMSS_NAME} \
     --vm-sku Standard_DS2_v2 \
     --instance-count 1 \
     --assign-identity $msiResourceID \
-    --image /subscriptions/3be1ff13-7eef-458c-b1ef-97a01af1b2f4/resourceGroups/kai-dev/providers/Microsoft.Compute/galleries/PackerSigGalleryEastUS/images/Flatcar298321Gen2/versions/1.0.1637929647 \
-    --plan-name stable-gen2 --plan-product flatcar-container-linux-free --plan-publisher kinvolk \
+    ${IMAGE_ARGS} \
     --upgrade-policy-mode Automatic -ojson
-# or use "kinvolk:flatcar-container-linux-free:stable-gen2:latest" for a stock image
 vmssEndTime=$(date +%s)
 log "Created VMSS in $((vmssEndTime-vmssStartTime)) seconds"
 

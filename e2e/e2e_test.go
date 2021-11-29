@@ -30,7 +30,22 @@ func createFile(path string) {
 }
 
 func TestE2EBasic(t *testing.T) {
-	entry := "Generating CustomData and cseCmd"
+	test_os := os.Getenv("TEST_OS")
+	var distro datamodel.Distro
+	var cgroupDriver, ossku string
+	var enableRuncShimV2 bool
+	if test_os == "ubuntu" {
+		distro = datamodel.AKSUbuntuContainerd1804Gen2
+		cgroupDriver = "cgroupfs"
+	} else if test_os == "flatcar" {
+		distro = datamodel.AKSFlatcar
+		cgroupDriver = "systemd"
+		enableRuncShimV2 = true
+		ossku = "Flatcar"
+	} else {
+		panic("error: the TEST_OS env var should be ubuntu or flatcar")
+	}
+	entry := "Generating CustomData and cseCmd for " + test_os
 	fmt.Println(entry)
 
 	fields, err := os.Open("fields.json")
@@ -100,7 +115,7 @@ func TestE2EBasic(t *testing.T) {
 					KubernetesConfig: &datamodel.KubernetesConfig{
 						ContainerRuntime: datamodel.Containerd,
 					},
-					Distro: datamodel.AKSFlatcar,
+					Distro: distro,
 				},
 			},
 			LinuxProfile: &datamodel.LinuxProfile{
@@ -142,9 +157,7 @@ func TestE2EBasic(t *testing.T) {
 		"--authentication-token-webhook":      "true",
 		"--authorization-mode":                "Webhook",
 		"--azure-container-registry-config":   "/etc/kubernetes/azure.json",
-		// TODO: Flatcar find a better location/way to configure this.
-		// Current Flatcar stable requires the systemd setting.
-		"--cgroup-driver":                     "systemd",
+		"--cgroup-driver":                     cgroupDriver,
 		"--cgroups-per-qos":                   "true",
 		"--client-ca-file":                    "/etc/kubernetes/certs/ca.crt",
 		"--cloud-config":                      "/etc/kubernetes/azure.json",
@@ -181,7 +194,7 @@ func TestE2EBasic(t *testing.T) {
 
 	config := &datamodel.NodeBootstrappingConfiguration{
 		ContainerService:               cs,
-		OSSKU:                          "Flatcar",
+		OSSKU:                          ossku,
 		CloudSpecConfig:                datamodel.AzurePublicCloudSpecForTest,
 		K8sComponents:                  k8sComponents,
 		AgentPoolProfile:               agentPool,
@@ -192,7 +205,7 @@ func TestE2EBasic(t *testing.T) {
 		ConfigGPUDriverIfNeeded:        true,
 		EnableGPUDevicePluginIfNeeded:  false,
 		EnableKubeletConfigFile:        false,
-		EnableRuncShimV2:               true,
+		EnableRuncShimV2:               enableRuncShimV2,
 		EnableNvidia:                   false,
 		FIPSEnabled:                    false,
 		KubeletClientTLSBootstrapToken: to.StringPtr(values.TLSBootstrapToken),

@@ -1,11 +1,11 @@
-name: E2E test
+name: Ubuntu E2E test
 on:
   push:
 env:
-  RESOURCE_GROUP_NAME: agentbaker-test-${{ github.run_id }}-rg
+  RESOURCE_GROUP_NAME: agentbaker-ubuntu-${{ github.run_id }}-rg
   LOCATION: westeurope
   SUBSCRIPTION_ID: ${{ secrets.SUBSCRIPTION_ID }}
-  CLUSTER_NAME: agentbaker-e2e-test-cluster
+  CLUSTER_NAME: agentbaker-e2e-ubuntu-cluster
 jobs:
   E2E-Test:
     runs-on: ubuntu-latest
@@ -17,11 +17,11 @@ jobs:
       with:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-    - name: Run e2e test
+    - name: Run Ubuntu e2e test
       run: |
         az account show
         cd e2e
-        bash -x e2e-script.sh
+        bash -x e2e-script.sh ubuntu
 
     - name: Cleanup
       if: ${{ always() }}
