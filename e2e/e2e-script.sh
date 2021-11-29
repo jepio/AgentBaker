@@ -198,6 +198,7 @@ log "Applied extensions in $((vmssExtEndTime-vmssExtStartTime)) seconds"
 
 KUBECONFIG=$(pwd)/kubeconfig; export KUBECONFIG
 
+waitingForNodeStartTime=$(date +%s)
 # Sleep to let the automatic upgrade of the VM finish
 for i in $(seq 1 10); do
     set +e
@@ -211,6 +212,7 @@ for i in $(seq 1 10); do
     fi
     break;
 done
+waitingForNodeEndTime=$(date +%s)
 
 if [[ "$retval" -eq 0 ]]; then
 	ok "Test succeeded, node joined the cluster"
@@ -219,10 +221,13 @@ else
 	exit 1
 fi
 
+log "Waited for node to join for another $((waitingForNodeEndTime-waitingForNodeStartTime)) seconds"
+
 # Run a nginx pod on the node to check if pod runs
 envsubst < pod-nginx-template.yaml > pod-nginx.yaml
 kubectl apply -f pod-nginx.yaml
 
+waitingForPodStartTime=$(date +%s)
 # Sleep to let Pod Status=Running
 for i in $(seq 1 10); do
     set +e
@@ -236,6 +241,7 @@ for i in $(seq 1 10); do
     fi
     break;
 done
+waitingForPodEndTime=$(date +%s)
 
 if [[ "$retval" -eq 0 ]]; then
     ok "Pod ran successfully"
@@ -243,6 +249,8 @@ else
     err "Pod pending/not running"
     exit 1
 fi
+
+log "Waited for Pod to run for another $((waitingForPodEndTime-waitingForPodStartTime)) seconds"
 
 globalEndTime=$(date +%s)
 log "Finished after $((globalEndTime-globalStartTime)) seconds"
