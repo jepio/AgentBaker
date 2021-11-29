@@ -196,13 +196,23 @@ az vmss extension set --resource-group $MC_RESOURCE_GROUP_NAME \
 vmssExtEndTime=$(date +%s)
 log "Applied extensions in $((vmssExtEndTime-vmssExtStartTime)) seconds"
 
-# Sleep to let the automatic upgrade of the VM finish
-sleep 60s
-
 KUBECONFIG=$(pwd)/kubeconfig; export KUBECONFIG
 
-# Check if the node joined the cluster
-if kubectl get nodes | grep -q $vmInstanceName; then
+# Sleep to let the automatic upgrade of the VM finish
+for i in $(seq 1 10); do
+    set +e
+    kubectl get nodes | grep -q $vmInstanceName
+    retval=$?
+    set -e
+    if [ "$retval" -ne 0 ]; then
+        log "retrying attempt $i"
+        sleep 10s
+        continue
+    fi
+    break;
+done
+
+if [[ "$retval" -eq 0 ]]; then
 	ok "Test succeeded, node joined the cluster"
 else
 	err "Node did not join cluster"
@@ -214,9 +224,20 @@ envsubst < pod-nginx-template.yaml > pod-nginx.yaml
 kubectl apply -f pod-nginx.yaml
 
 # Sleep to let Pod Status=Running
-sleep 60s
+for i in $(seq 1 10); do
+    set +e
+    kubectl get pods -o wide | grep -q 'Running'
+    retval=$?
+    set -e
+    if [ "$retval" -ne 0 ]; then
+        log "retrying attempt $i"
+        sleep 10s
+        continue
+    fi
+    break;
+done
 
-if kubectl get pods -o wide | grep -q 'Running'; then
+if [[ "$retval" -eq 0 ]]; then
     ok "Pod ran successfully"
 else
     err "Pod pending/not running"
