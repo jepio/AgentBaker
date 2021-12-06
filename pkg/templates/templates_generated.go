@@ -4316,6 +4316,12 @@ var _linuxCloudInitConfigIgnYml = []byte(`systemd:
       [Install]
       WantedBy=local-fs.target
 storage:
+  filesystems:
+    - name: oem
+      mount:
+        device: /dev/disk/by-label/OEM
+        format: btrfs
+        label: OEM
   directories:
   - path: /opt/libexec
     mode: 0755
@@ -4328,10 +4334,20 @@ storage:
   # TODO: broken? haven't investigated, maybe I just missed regenerating.
   - path: /var/log/azure
     mode: 0755
+  - path: /bin
+    filesystem: oem
+    mode: 0755
   links:
   - path: /opt/bin/nc
     target: /usr/bin/ncat
   files:
+  - path: /bin/oem-postinst
+    filesystem: oem
+    mode: 0755
+    contents:
+      inline: |
+        #!/bin/sh
+        touch /run/reboot-required
   - path: /opt/bin/agentbaker-decompress-scripts.sh
     mode: 0755
     contents:
