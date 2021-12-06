@@ -4256,8 +4256,6 @@ func linuxCloudInitArtifactsUbuntuCse_install_ubuntuSh() (*asset, error) {
 
 var _linuxCloudInitConfigIgnYml = []byte(`systemd:
   units:
-  - name: update-engine.service
-    mask: true
   - name: locksmithd.service
     mask: true
   - name: agentbaker-decompress-scripts.service
@@ -4341,6 +4339,11 @@ storage:
   - path: /opt/bin/nc
     target: /usr/bin/ncat
   files:
+  - path: /etc/flatcar/update.conf
+    mode: 0644
+    contents:
+      inline: |
+        GROUP=aks
   - path: /bin/oem-postinst
     filesystem: oem
     mode: 0755
