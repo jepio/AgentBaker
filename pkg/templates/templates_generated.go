@@ -4690,7 +4690,7 @@ storage:
         compression: gzip
       inline: !!binary |
         {{GetVariableProperty "cloudInitData" "containerdKubeletDropin"}}
-{{if UseRuncShimV2}}
+{{if true}}
   - path: /etc/containerd/config.toml
     mode: 0644
     contents:
@@ -4999,7 +4999,7 @@ storage:
     mode: 0644
     contents:
       inline: |
-        KUBELET_FLAGS={{GetKubeletConfigKeyVals}}
+        KUBELET_FLAGS=--cgroup-driver=systemd {{GetKubeletConfigKeyVals}}
         KUBELET_REGISTER_SCHEDULABLE=true
         NETWORK_POLICY={{GetParameter "networkPolicy"}}
     {{- if not (IsKubernetesVersionGe "1.17.0")}}

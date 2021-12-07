@@ -32,15 +32,11 @@ func createFile(path string) {
 func TestE2EBasic(t *testing.T) {
 	test_os := os.Getenv("TEST_OS")
 	var distro datamodel.Distro
-	var cgroupDriver, ossku string
-	var enableRuncShimV2 bool
+	var ossku string
 	if test_os == "ubuntu" {
 		distro = datamodel.AKSUbuntuContainerd1804Gen2
-		cgroupDriver = "cgroupfs"
 	} else if test_os == "flatcar" {
 		distro = datamodel.AKSFlatcar
-		cgroupDriver = "systemd"
-		enableRuncShimV2 = true
 		ossku = "Flatcar"
 	} else {
 		panic("error: the TEST_OS env var should be ubuntu or flatcar")
@@ -157,7 +153,6 @@ func TestE2EBasic(t *testing.T) {
 		"--authentication-token-webhook":      "true",
 		"--authorization-mode":                "Webhook",
 		"--azure-container-registry-config":   "/etc/kubernetes/azure.json",
-		"--cgroup-driver":                     cgroupDriver,
 		"--cgroups-per-qos":                   "true",
 		"--client-ca-file":                    "/etc/kubernetes/certs/ca.crt",
 		"--cloud-config":                      "/etc/kubernetes/azure.json",
@@ -205,7 +200,6 @@ func TestE2EBasic(t *testing.T) {
 		ConfigGPUDriverIfNeeded:        true,
 		EnableGPUDevicePluginIfNeeded:  false,
 		EnableKubeletConfigFile:        false,
-		EnableRuncShimV2:               enableRuncShimV2,
 		EnableNvidia:                   false,
 		FIPSEnabled:                    false,
 		KubeletClientTLSBootstrapToken: to.StringPtr(values.TLSBootstrapToken),
