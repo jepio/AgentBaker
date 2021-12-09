@@ -95,6 +95,15 @@ storage:
       inline: |
         #!/bin/sh
         touch /run/reboot-required
+  - path: /etc/systemd/network/cbr.network
+    mode: 0644
+    contents:
+      inline: |
+        # Exclude kubernetes CNI devices from DHCP by default
+        [Match]
+        Name=cbr0
+        [Link]
+        Unmanaged=yes
   - path: /opt/bin/agentbaker-decompress-scripts.sh
     mode: 0755
     contents:
