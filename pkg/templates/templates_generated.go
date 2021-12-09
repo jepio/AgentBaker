@@ -4254,8 +4254,6 @@ func linuxCloudInitArtifactsUbuntuCse_install_ubuntuSh() (*asset, error) {
 
 var _linuxCloudInitConfigIgnYml = []byte(`systemd:
   units:
-  - name: update-engine.service
-    mask: true
   - name: locksmithd.service
     mask: true
   - name: agentbaker-decompress-scripts.service
@@ -4314,6 +4312,12 @@ var _linuxCloudInitConfigIgnYml = []byte(`systemd:
       [Install]
       WantedBy=local-fs.target
 storage:
+  filesystems:
+    - name: oem
+      mount:
+        device: /dev/disk/by-label/OEM
+        format: btrfs
+        label: OEM
   directories:
   - path: /opt/libexec
     mode: 0755
@@ -4326,10 +4330,25 @@ storage:
   # TODO: broken? haven't investigated, maybe I just missed regenerating.
   - path: /var/log/azure
     mode: 0755
+  - path: /bin
+    filesystem: oem
+    mode: 0755
   links:
   - path: /opt/bin/nc
     target: /usr/bin/ncat
   files:
+  - path: /etc/flatcar/update.conf
+    mode: 0644
+    contents:
+      inline: |
+        GROUP=aks
+  - path: /bin/oem-postinst
+    filesystem: oem
+    mode: 0755
+    contents:
+      inline: |
+        #!/bin/sh
+        touch /run/reboot-required
   - path: /opt/bin/agentbaker-decompress-scripts.sh
     mode: 0755
     contents:
@@ -4671,7 +4690,7 @@ storage:
         compression: gzip
       inline: !!binary |
         {{GetVariableProperty "cloudInitData" "containerdKubeletDropin"}}
-{{if UseRuncShimV2}}
+{{if true}}
   - path: /etc/containerd/config.toml
     mode: 0644
     contents:
@@ -4980,7 +4999,7 @@ storage:
     mode: 0644
     contents:
       inline: |
-        KUBELET_FLAGS={{GetKubeletConfigKeyVals}}
+        KUBELET_FLAGS=--cgroup-driver=systemd {{GetKubeletConfigKeyVals}}
         KUBELET_REGISTER_SCHEDULABLE=true
         NETWORK_POLICY={{GetParameter "networkPolicy"}}
     {{- if not (IsKubernetesVersionGe "1.17.0")}}
