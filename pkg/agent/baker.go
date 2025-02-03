@@ -33,11 +33,13 @@ func (t *TemplateGenerator) getNodeBootstrappingPayload(config *datamodel.NodeBo
 	var customData string
 	if config.AgentPoolProfile.IsWindows() {
 		customData = getCustomDataFromJSON(t.getWindowsNodeCustomDataJSONObject(config))
+	} else if config.AgentPoolProfile.IsFlatcar() {
+		customData = getCustomDataFromJSON(t.getFlatcarLinuxNodeCustomDataJSONObject(config))
 	} else {
 		customData = getCustomDataFromJSON(t.getLinuxNodeCustomDataJSONObject(config))
 	}
 
-	if config.AgentPoolProfile.IsWindows() {
+	if config.AgentPoolProfile.IsWindows() || config.AgentPoolProfile.IsFlatcar() {
 		return base64.StdEncoding.EncodeToString([]byte(customData))
 	}
 
@@ -56,6 +58,22 @@ func (t *TemplateGenerator) getLinuxNodeCustomDataJSONObject(config *datamodel.N
 	if e != nil {
 		panic(e)
 	}
+
+	return fmt.Sprintf("{\"customData\": \"%s\"}", str)
+}
+
+// GetLinuxNodeCustomDataJSONObject returns Linux customData JSON object in the form.
+// { "customData": "<customData string>" }.
+func (t *TemplateGenerator) getFlatcarLinuxNodeCustomDataJSONObject(config *datamodel.NodeBootstrappingConfiguration) string {
+	// get parameters
+	parameters := getParameters(config)
+	// get variable cloudInit
+	variables := getCustomDataVariables(config)
+	str, e := t.getSingleLineForTemplate(kubernetesFlatcarNodeCustomDataYaml, config.AgentPoolProfile, getBakerFuncMap(config, parameters, variables), true)
+	if e != nil {
+		panic(e)
+	}
+	// TODO: compile butane yaml to -> ignition json
 
 	return fmt.Sprintf("{\"customData\": \"%s\"}", str)
 }
@@ -1083,6 +1101,9 @@ func areCustomCATrustCertsPopulated(config datamodel.NodeBootstrappingConfigurat
 
 func isMariner(osSku string) bool {
 	return osSku == datamodel.OSSKUCBLMariner || osSku == datamodel.OSSKUMariner || osSku == datamodel.OSSKUAzureLinux
+}
+func isFlatcar(osSku string) bool {
+	return osSku == datamodel.OSSKUFlatcar
 }
 
 const sysctlTemplateString = `# This is a partial workaround to this upstream Kubernetes issue:
