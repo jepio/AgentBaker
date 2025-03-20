@@ -15,6 +15,20 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/containerservice/armcontainerservice/v6"
 )
 
+func Test_Flatcar(t *testing.T) {
+	RunScenario(t, &Scenario{
+		Description: "Test Flatcar image",
+		Config: Config{
+			Cluster: ClusterKubenet,
+			VHD:     config.NoVHDFlatcar,
+			BootstrapConfigMutator: func(nbc *datamodel.NodeBootstrappingConfiguration) {
+			},
+			Validator: func(ctx context.Context, s *Scenario) {
+			},
+		},
+	})
+}
+
 func Test_AzureLinuxV2(t *testing.T) {
 	RunScenario(t, &Scenario{
 		Description: "Tests that a node using a AzureLinuxV2 (CgroupV2) VHD can be properly bootstrapped",
